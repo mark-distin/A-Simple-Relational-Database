@@ -1,0 +1,1895 @@
+
+--High Distinction, Aut2019
+--Name: Jiaran.Ma
+--Email:Jiaran.Ma-1@student.uts.edu.au
+--
+--This database contains data of "2014 sochi olympic game" and "2018 pyeongchang olympic game",
+--including sport, event, competition, athlete and medal results.
+--Each sport has many events and every event has many competitions which held in different games.
+--Athletes from same or different countries may take part in both or only one game.
+--Athletes in this database have at least one medal.
+--
+--source web:
+--https://www.olympic.org/
+--https://en.wikipedia.org/wiki/2014_Winter_Olympics
+--https://en.wikipedia.org/wiki/2018_Winter_Olympics
+
+
+
+
+DROP view  Alpine_athlete CASCADE;
+
+DROP table OG_Sport CASCADE;
+DROP table OG_Event CASCADE;
+DROP table OG_OlympicGame CASCADE;
+DROP table OG_Competition CASCADE;
+DROP table OG_Country CASCADE;
+DROP table OG_Athlete CASCADE;
+DROP table OG_AthleteSport CASCADE;
+DROP table OG_AthleteOlympic CASCADE;
+DROP table OG_Result CASCADE;
+
+
+
+Create table OG_Sport
+(
+	sportNo		integer		not null,
+	sportName	text		not null,
+
+	CONSTRAINT OG_SportPK PRIMARY KEY (sportNo),
+
+	CONSTRAINT OG_Sport_No    CHECK ((sportNo >=1 ) and ( sportNo <=15 )),
+	CONSTRAINT OG_Sport_Name  CHECK ( sportName IN (
+		'alpine skiing', 'biathlon', 'bobsleigh', 'cross country skiing',
+		'curling', 'figure skating', 'freestyle skiing', 'ice hockey',  
+		'luge', 'nordic combined', 'short track', 'skeleton',  
+		'ski jumping', 'snowboard', 'speed skating'))
+);
+
+
+Create table OG_Event
+(
+	eventNo		integer		not null,
+	sportNo		integer,
+	eventName	text		not null,
+	type		char(3)         not null,
+
+	CONSTRAINT OG_EventPK PRIMARY KEY (eventNo),
+	CONSTRAINT OG_EventFK FOREIGN KEY (sportNo) REFERENCES OG_Sport
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+
+	CONSTRAINT OG_Event_No   CHECK ((eventNo >= 1) and (eventNo <= 80)),
+	CONSTRAINT OG_Event_Type CHECK (type IN (
+		'M',    --Men
+		'W',    --Women
+		'MI')), --Mixed
+
+	CONSTRAINT OG_Event_Name CHECK ( eventName IN (
+		'alpine skiing combined men','alpine skiing downhill men','alpine skiing giant slalom men',
+		'alpine skiing slalom men','alpine skiing super-g men','alpine skiing combined women',
+		'alpine skiing downhill women','alpine skiing giant slalom women','alpine skiing slalom women',
+		'alpine skiing super-g women','alpine skiing team event',	
+
+		'biathlon 10km sprint men','biathlon 12.5km pursuit men','biathlon 15km mass start men',
+		'biathlon 20km individual men','biathlon 4*7.5km relay men','biathlon 10km pursuit women',
+		'biathlon 12.5km mass start women','biathlon 15km individual women','biathlon 4*6km relay women',
+		'biathlon 7.5km sprint women',
+
+		'bobsleigh four-man','bobsleigh two-man','bobsleigh women',
+
+		'cross country skiing print classic men','cross country skiing team sprint free men',
+		'cross country skiing sprint classic women','cross country skiing team sprint free women',
+
+		'curling men','curling women','curling doubles',
+
+		'single figure skating men','single figure skating women','figure skating ice dance',
+		'pair figure skating',
+
+		'freestyle skiing aerials men','freestyle skiing moguls men','freestyle skiing ski cross men',
+		'freestyle skiing aerials women','freestyle skiing moguls women',
+		'freestyle skiing ski cross women',	
+	
+		'ice hockey men','ice hockey women',		
+
+		'luge singles men','luge singles women','luge doubles','luge team relay', 
+
+		'nordic combined individual gundersen large hill/10km men',
+		'nordic combined individual gundersen normal hill men',
+		'nordic combined team gundersen larger hill men', 
+
+		'short track 1000m men','short track 1500m men','short track 500m men','short track 1000m women',
+		'short track 1500m women','short track 500m women',
+
+		'skeleton men','skeleton women',
+
+		'ski jumping large hill individual men','ski jumping normal hill individual men',
+		'ski jumping team men','ski jumping normal hill individual women',
+
+		'snowboard big air men','snowboard halfpipe men','snowboard slopestyle men',
+		'snowboard cross men','snowboard big air women','snowboard halfpipe women',
+		'snowboard slopestyle women','snowboard cross women',
+
+		'speed skating 10000m men','speed skating 1000m men','speed skating 1500m men',
+		'speed skating 5000m men','speed skating 500m men','speed skating 3000m women',
+		'speed skating 1000m women','speed skating 1500m women','speed skating 5000m women',
+		'speed skating 500m women'
+))
+);
+
+
+Create table OG_OlympicGame
+(
+	gameNo		integer		not null,
+	gameName	text		not null,
+	year		varchar(4)	not null,
+	duration	text		not null,
+	country		text		not null,
+	city		text		not null,
+	eventAmount     integer 	not null,
+	countryAmount	integer		not null,
+	athleteAmount	integer 	not null,
+
+	CONSTRAINT OG_OlympicGamePK PRIMARY KEY (gameNo),
+
+	CONSTRAINT OG_OlympicGame_Name     CHECK (gameName IN (
+		'sochi 2014','pyeongchang 2018')),
+	CONSTRAINT OG_OlympicGame_Year     CHECK (year IN (
+		'2014','2018')),
+	CONSTRAINT OG_OlympicGame_Duration CHECK (duration IN (
+		'07 feb - 23 feb','09 feb - 25 feb')),
+	CONSTRAINT OG_OlympicGame_Country CHECK (country IN (
+		'russian federation','republic of korea')),
+	CONSTRAINT OG_OlympicGame_City CHECK (city IN (
+		'sochi','pyeongchang'))
+);
+
+
+Create table OG_Competition
+(
+	compNo		integer		not null,
+	compName	text		not null,
+	eventNo		integer,
+	gameNo		integer,
+
+
+	CONSTRAINT OG_CompetitionPK PRIMARY KEY (compNo),
+	CONSTRAINT OG_CompetitionFK_Event       FOREIGN KEY (eventNo) REFERENCES OG_Event
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+	CONSTRAINT OG_CompetitionFK_Olympicgame FOREIGN KEY (gameNo) REFERENCES OG_OlympicGame
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+	
+	CONSTRAINT OG_Competition_Compno CHECK ((compNo >= 1) and (compNo <= 160))
+);
+
+
+Create table OG_Country
+(
+	countryCode	char(3)		not null,
+	countryName	text		not null,
+
+	CONSTRAINT OG_CountryPK PRIMARY KEY (countryCode),
+
+	CONSTRAINT OG_Country_Name CHECK ( countryName IN (
+		'Andorra','Albania','Algeria','Argentina','Armenia','Australia',
+		'Austria','Azerbaijan','Belarus','Belgium','Bermuda','Bolivia',
+		'Bosnia and Herzegovina','Brazil',
+		'Bulgaria','Cameroon','Canada','Cayman islands','Chile',
+		'China','Colombia','Costa Rica','Croatia','Cyprus',
+		'Czech Republic','Denmark','Dominica','Ecuador','Eritrea',
+		'Estonia','Ethiopia','Fiji','Finland','France','Georgia',
+		'Germany','Ghana','Great Britain','Greece','Hong Kong',
+		'Hungary','Iceland','India','Iran','Ireland','Israel',
+		'Italy','Jamaica','Japan','Kazakhstan','Kenya',
+		'North Korea','South Korea','Kyrgyzstan','Latvia','Lebanon',
+		'Liechtenstein','Lithuania','Luxembourg','Macedonia','Malta',
+		'Madagascar','Malaysia','Mexico','Moldova','Monaco',
+		'Mongolia','Montenegro','Morocco','Nepal','Netherlands',
+		'New Zealand','Nigeria','Norway','Paraguay','Pakistan','Peru',
+		'Philippines','Poland','Puerto Rico','Portugal','Romania',
+		'Russia','San Marino','Senegal','Serbia and Montenegro',
+		'Singapore','Slovakia','Slovenia','South Africa','Spain',
+		'Sweden','Switzerland','Chinese Taipei','Tajikistan',
+		'Thailand','Togo','Tonga','Trinidad and Tobago','Turkey',
+		'Ukraine','United States','Uzbekistan','Venezuela',
+		'Virgin Islands','Zimbabwe'))
+
+);
+
+
+Create table OG_Athlete
+(
+	athNo		integer		not null,
+	athName		text		not null,
+	birth		varchar(4)  	not null,
+	countryCode	char(3),
+	gender		char(1),
+
+	CONSTRAINT OG_AthletePK PRIMARY KEY (athNo),
+	CONSTRAINT OG_AthleteFK FOREIGN KEY (countryCode) REFERENCES OG_Country
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+	CONSTRAINT OG_Athlete_No     CHECK ((athNo >= 1 ) and (athNo < 260)),
+	CONSTRAINT OG_Athlete_Birth  CHECK ((birth > 1950) and (birth <2010)),
+	CONSTRAINT OG_Athlete_Gender CHECK (gender IN (
+		'M',  -- Male
+		'F')) -- Female
+);
+
+
+
+Create table OG_AthleteSport
+(
+	athNo		integer,	
+	sportNo		integer,
+
+	CONSTRAINT OG_AthleteSportPK PRIMARY KEY (athNo, sportNo),
+	CONSTRAINT OG_AthleteSportFK_Athlete FOREIGN KEY (athNo) REFERENCES OG_Athlete
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+ 	CONSTRAINT OG_AthleteSportFK_Sport   FOREIGN KEY (sportNo) REFERENCES OG_Sport
+ON DELETE CASCADE
+ON UPDATE CASCADE
+);
+
+
+Create table OG_AthleteOlympic
+(
+	gameNo		integer,
+	athNo		integer,
+	
+	CONSTRAINT OG_AthleteOlympicPK PRIMARY KEY (gameNo, athNo),
+	CONSTRAINT OG_AthleteOlympicFK_OlympicGame FOREIGN KEY (gameNo) REFERENCES OG_OlympicGame
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+	CONSTRAINT OG_AthleteOlympicFK_Athlete     FOREIGN KEY (athNo) REFERENCES OG_Athlete
+ON DELETE CASCADE
+ON UPDATE CASCADE
+);
+
+
+Create table OG_Result
+(
+	compNo		integer,
+	athNo		integer,
+	medal		char(1),
+
+	CONSTRAINT OG_ResultPK PRIMARY KEY (compNo, athNo),
+	CONSTRAINT OG_ResultFK_Competition FOREIGN KEY (compNo) REFERENCES OG_Competition
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+	CONSTRAINT OG_ResultFK_Athlete     FOREIGN KEY (athNo) REFERENCES OG_Athlete
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+
+	CONSTRAINT OG_Result_Medal CHECK ( medal in ( 
+		'G', -- Gold
+		'S', -- Siliver
+		'B'))-- Bronze
+);
+
+
+Create view Alpine_athlete
+	(athlete_no, athlete_name, birth, nation, gender) as
+	select athNo, athName, birth, countryName, gender
+	from  OG_Sport natural join OG_AthleteSport natural join OG_Athlete 
+	      natural join OG_Country
+	where sportName = 'alpine skiing'
+	order by athNo;
+
+
+
+
+
+
+INSERT INTO OG_Sport VALUES('1', 'alpine skiing');
+INSERT INTO OG_Sport VALUES('2', 'biathlon');
+INSERT INTO OG_Sport VALUES('3', 'bobsleigh');
+INSERT INTO OG_Sport VALUES('4', 'cross country skiing');
+INSERT INTO OG_Sport VALUES('5', 'curling');
+INSERT INTO OG_Sport VALUES('6', 'figure skating');
+INSERT INTO OG_Sport VALUES('7', 'freestyle skiing');
+INSERT INTO OG_Sport VALUES('8', 'ice hockey');
+INSERT INTO OG_Sport VALUES('9', 'luge');
+INSERT INTO OG_Sport VALUES('10', 'nordic combined');
+INSERT INTO OG_Sport VALUES('11', 'short track');
+INSERT INTO OG_Sport VALUES('12', 'skeleton');
+INSERT INTO OG_Sport VALUES('13', 'ski jumping');
+INSERT INTO OG_Sport VALUES('14', 'snowboard');
+INSERT INTO OG_Sport VALUES('15', 'speed skating');
+
+
+
+
+
+
+INSERT INTO OG_Event VALUES('1', '1', 'alpine skiing combined men', 'M');
+INSERT INTO OG_Event VALUES('2', '1', 'alpine skiing combined women', 'W');
+INSERT INTO OG_Event VALUES('3', '1', 'alpine skiing downhill men', 'M');
+INSERT INTO OG_Event VALUES('4', '1', 'alpine skiing downhill women', 'W');
+INSERT INTO OG_Event VALUES('5', '1', 'alpine skiing giant slalom men', 'M');
+INSERT INTO OG_Event VALUES('6', '1', 'alpine skiing giant slalom women', 'W');
+INSERT INTO OG_Event VALUES('7', '1', 'alpine skiing slalom men', 'M');
+INSERT INTO OG_Event VALUES('8', '1', 'alpine skiing slalom women', 'W');
+INSERT INTO OG_Event VALUES('9', '1', 'alpine skiing super-g men', 'M');
+INSERT INTO OG_Event VALUES('10', '1', 'alpine skiing super-g women', 'W');
+INSERT INTO OG_Event VALUES('11', '1', 'alpine skiing team event', 'MI');
+INSERT INTO OG_Event VALUES('12', '2', 'biathlon 10km sprint men', 'M');
+INSERT INTO OG_Event VALUES('13', '2', 'biathlon 10km pursuit women', 'W');
+INSERT INTO OG_Event VALUES('14', '2', 'biathlon 12.5km pursuit men', 'M');
+INSERT INTO OG_Event VALUES('15', '2', 'biathlon 12.5km mass start women', 'W');
+INSERT INTO OG_Event VALUES('16', '2', 'biathlon 15km mass start men', 'M');
+INSERT INTO OG_Event VALUES('17', '2', 'biathlon 15km individual women', 'W');
+INSERT INTO OG_Event VALUES('18', '2', 'biathlon 20km individual men', 'M');
+INSERT INTO OG_Event VALUES('19', '2', 'biathlon 4*6km relay women', 'W');
+INSERT INTO OG_Event VALUES('20', '2', 'biathlon 4*7.5km relay men', 'M');
+INSERT INTO OG_Event VALUES('21', '2', 'biathlon 7.5km sprint women', 'W');
+INSERT INTO OG_Event VALUES('22', '3', 'bobsleigh four-man', 'M');
+INSERT INTO OG_Event VALUES('23', '3', 'bobsleigh two-man', 'M');
+INSERT INTO OG_Event VALUES('24', '3', 'bobsleigh women', 'W');
+INSERT INTO OG_Event VALUES('25', '4', 'cross country skiing print classic men', 'M');
+INSERT INTO OG_Event VALUES('26', '4', 'cross country skiing team sprint free men', 'M');
+INSERT INTO OG_Event VALUES('27', '4', 'cross country skiing sprint classic women', 'W');
+INSERT INTO OG_Event VALUES('28', '4', 'cross country skiing team sprint free women', 'W');
+INSERT INTO OG_Event VALUES('29', '5', 'curling men', 'M');
+INSERT INTO OG_Event VALUES('30', '5', 'curling women', 'W');
+INSERT INTO OG_Event VALUES('31', '5', 'curling doubles', 'MI');
+INSERT INTO OG_Event VALUES('32', '6', 'single figure skating men', 'M');
+INSERT INTO OG_Event VALUES('33', '6', 'single figure skating women', 'W');
+INSERT INTO OG_Event VALUES('34', '6', 'figure skating ice dance', 'MI');
+INSERT INTO OG_Event VALUES('35', '6', 'pair figure skating', 'MI');
+INSERT INTO OG_Event VALUES('36', '7', 'freestyle skiing aerials men', 'M');
+INSERT INTO OG_Event VALUES('37', '7', 'freestyle skiing moguls men', 'M');
+INSERT INTO OG_Event VALUES('38', '7', 'freestyle skiing ski cross men', 'M');
+INSERT INTO OG_Event VALUES('39', '7', 'freestyle skiing aerials women', 'W');
+INSERT INTO OG_Event VALUES('40', '7', 'freestyle skiing moguls women', 'W');
+INSERT INTO OG_Event VALUES('41', '7', 'freestyle skiing ski cross women', 'W');
+INSERT INTO OG_Event VALUES('42', '8', 'ice hockey men', 'M');
+INSERT INTO OG_Event VALUES('43', '8', 'ice hockey women', 'W');
+INSERT INTO OG_Event VALUES('44', '9', 'luge singles men', 'M');
+INSERT INTO OG_Event VALUES('45', '9', 'luge singles women', 'W');
+INSERT INTO OG_Event VALUES('46', '9', 'luge doubles', 'MI');
+INSERT INTO OG_Event VALUES('47', '9', 'luge team relay', 'MI');
+INSERT INTO OG_Event VALUES('48', '10', 'nordic combined individual gundersen large hill/10km men', 'M');
+INSERT INTO OG_Event VALUES('49', '10', 'nordic combined individual gundersen normal hill men', 'M');
+INSERT INTO OG_Event VALUES('50', '10', 'nordic combined team gundersen larger hill men', 'M');
+INSERT INTO OG_Event VALUES('51', '11', 'short track 1000m men', 'M');
+INSERT INTO OG_Event VALUES('52', '11', 'short track 1500m men', 'M');
+INSERT INTO OG_Event VALUES('53', '11', 'short track 500m men', 'M');
+INSERT INTO OG_Event VALUES('54', '11', 'short track 1000m women', 'W');
+INSERT INTO OG_Event VALUES('55', '11', 'short track 1500m women', 'W');
+INSERT INTO OG_Event VALUES('56', '11', 'short track 500m women', 'W');
+INSERT INTO OG_Event VALUES('57', '12', 'skeleton men', 'M');
+INSERT INTO OG_Event VALUES('58', '12', 'skeleton women', 'W');
+INSERT INTO OG_Event VALUES('59', '13', 'ski jumping large hill individual men', 'M');
+INSERT INTO OG_Event VALUES('60', '13', 'ski jumping normal hill individual men', 'M');
+INSERT INTO OG_Event VALUES('61', '13', 'ski jumping team men', 'M');
+INSERT INTO OG_Event VALUES('62', '13', 'ski jumping normal hill individual women', 'W');
+INSERT INTO OG_Event VALUES('63', '14', 'snowboard big air men', 'M');
+INSERT INTO OG_Event VALUES('64', '14', 'snowboard halfpipe men', 'M');
+INSERT INTO OG_Event VALUES('65', '14', 'snowboard slopestyle men', 'M');
+INSERT INTO OG_Event VALUES('66', '14', 'snowboard cross men', 'M');
+INSERT INTO OG_Event VALUES('67', '14', 'snowboard big air women', 'W');
+INSERT INTO OG_Event VALUES('68', '14', 'snowboard halfpipe women', 'W');
+INSERT INTO OG_Event VALUES('69', '14', 'snowboard slopestyle women', 'W');
+INSERT INTO OG_Event VALUES('70', '14', 'snowboard cross women', 'W');
+INSERT INTO OG_Event VALUES('71', '15', 'speed skating 10000m men', 'M');
+INSERT INTO OG_Event VALUES('72', '15', 'speed skating 1000m men', 'M');
+INSERT INTO OG_Event VALUES('73', '15', 'speed skating 1500m men', 'M');
+INSERT INTO OG_Event VALUES('74', '15', 'speed skating 5000m men', 'M');
+INSERT INTO OG_Event VALUES('75', '15', 'speed skating 500m men', 'M');
+INSERT INTO OG_Event VALUES('76', '15', 'speed skating 3000m women', 'W');
+INSERT INTO OG_Event VALUES('77', '15', 'speed skating 1000m women', 'W');
+INSERT INTO OG_Event VALUES('78', '15', 'speed skating 1500m women', 'W');
+INSERT INTO OG_Event VALUES('79', '15', 'speed skating 5000m women', 'W');
+INSERT INTO OG_Event VALUES('80', '15', 'speed skating 500m women', 'W');
+
+
+
+
+
+
+INSERT INTO OG_OlympicGame VALUES('1', 'sochi 2014', '2014', '07 feb - 23 feb', 'russian federation', 'sochi', '98', '88', '2780');
+INSERT INTO OG_OlympicGame VALUES('2', 'pyeongchang 2018', '2018', '09 feb - 25 feb', 'republic of korea', 'pyeongchang', '102', '92', '1833');
+
+
+
+
+
+
+INSERT INTO OG_Competition VALUES('1', 'pyeongchang2018 alpine skiing combined men', '1', '2');
+INSERT INTO OG_Competition VALUES('2', 'pyeongchang2018 alpine skiing combined women', '2', '2');
+INSERT INTO OG_Competition VALUES('3', 'pyeongchang2018 alpine skiing downhill men', '3', '2');
+INSERT INTO OG_Competition VALUES('4', 'pyeongchang2018 alpine skiing downhill women', '4', '2');
+INSERT INTO OG_Competition VALUES('5', 'pyeongchang2018 alpine skiing giant slalom men', '5', '2');
+INSERT INTO OG_Competition VALUES('6', 'pyeongchang2018 alpine skiing giant slalom women', '6', '2');
+INSERT INTO OG_Competition VALUES('7', 'pyeongchang2018 alpine skiing slalom men', '7', '2');
+INSERT INTO OG_Competition VALUES('8', 'pyeongchang2018 alpine skiing slalom women', '8', '2');
+INSERT INTO OG_Competition VALUES('9', 'pyeongchang2018 alpine skiing super-g men', '9', '2');
+INSERT INTO OG_Competition VALUES('10', 'pyeongchang2018 alpine skiing super-g women', '10', '2');
+INSERT INTO OG_Competition VALUES('11', 'pyeongchang2018 alpine skiing team event', '11', '2');
+INSERT INTO OG_Competition VALUES('12', 'sochi2014 alpine skiing combined men', '1', '1');
+INSERT INTO OG_Competition VALUES('13', 'sochi2014 alpine skiing combined women', '2', '1');
+INSERT INTO OG_Competition VALUES('14', 'sochi2014 alpine skiing downhill men', '3', '1');
+INSERT INTO OG_Competition VALUES('15', 'sochi2014 alpine skiing downhill women', '4', '1');
+INSERT INTO OG_Competition VALUES('16', 'sochi2014 alpine skiing giant slalom men', '5', '1');
+INSERT INTO OG_Competition VALUES('17', 'sochi2014 alpine skiing giant slalom women', '6', '1');
+INSERT INTO OG_Competition VALUES('18', 'sochi2014 alpine skiing slalom men', '7', '1');
+INSERT INTO OG_Competition VALUES('19', 'sochi2014 alpine skiing slalom women', '8', '1');
+INSERT INTO OG_Competition VALUES('20', 'sochi2014 alpine skiing super-g men', '9', '1');
+INSERT INTO OG_Competition VALUES('21', 'sochi2014 alpine skiing super-g women', '10', '1');
+INSERT INTO OG_Competition VALUES('22', 'pyeongchang2018 biathlon 10km sprint men', '12', '2');
+INSERT INTO OG_Competition VALUES('23', 'pyeongchang2018 biathlon 10km pursuit women', '13', '2');
+INSERT INTO OG_Competition VALUES('24', 'pyeongchang2018 biathlon 12.5km pursuit men', '14', '2');
+INSERT INTO OG_Competition VALUES('25', 'pyeongchang2018 biathlon 12.5km mass start women', '15', '2');
+INSERT INTO OG_Competition VALUES('26', 'pyeongchang2018 biathlon 15km mass start men', '16', '2');
+INSERT INTO OG_Competition VALUES('27', 'pyeongchang2018 biathlon 15km individual women', '17', '2');
+INSERT INTO OG_Competition VALUES('28', 'pyeongchang2018 biathlon 20km individual men', '18', '2');
+INSERT INTO OG_Competition VALUES('29', 'pyeongchang2018 biathlon 4*6km relay women', '19', '2');
+INSERT INTO OG_Competition VALUES('30', 'pyeongchang2018 biathlon 4*7.5km relay men', '20', '2');
+INSERT INTO OG_Competition VALUES('31', 'pyeongchang2018 biathlon 7.5km sprint women', '21', '2');
+INSERT INTO OG_Competition VALUES('32', 'sochi2014 biathlon 10km sprint men', '12', '1');
+INSERT INTO OG_Competition VALUES('33', 'sochi2014 biathlon 10km pursuit women', '13', '1');
+INSERT INTO OG_Competition VALUES('34', 'sochi2014 biathlon 12.5km pursuit men', '14', '1');
+INSERT INTO OG_Competition VALUES('35', 'sochi2014 biathlon 12.5km mass start women', '15', '1');
+INSERT INTO OG_Competition VALUES('36', 'sochi2014 biathlon 15km mass start men', '16', '1');
+INSERT INTO OG_Competition VALUES('37', 'sochi2014 biathlon 15km individual women', '17', '1');
+INSERT INTO OG_Competition VALUES('38', 'sochi2014 biathlon 20km individual men', '18', '1');
+INSERT INTO OG_Competition VALUES('39', 'sochi2014 biathlon 4*6km relay women', '19', '1');
+INSERT INTO OG_Competition VALUES('40', 'sochi2014 biathlon 4*7.5km relay men', '20', '1');
+INSERT INTO OG_Competition VALUES('41', 'sochi2014 biathlon 7.5km sprint women', '21', '1');
+INSERT INTO OG_Competition VALUES('42', 'pyeongchang2018 bobsleigh four-man', '22', '2');
+INSERT INTO OG_Competition VALUES('43', 'pyeongchang2018 bobsleigh two-man', '23', '2');
+INSERT INTO OG_Competition VALUES('44', 'pyeongchang2018 bobsleigh women', '24', '2');
+INSERT INTO OG_Competition VALUES('45', 'sochi2014 bobsleigh four-man', '22', '1');
+INSERT INTO OG_Competition VALUES('46', 'sochi2014 bobsleigh two-man', '23', '1');
+INSERT INTO OG_Competition VALUES('47', 'sochi2014 bobsleigh women', '24', '1');
+INSERT INTO OG_Competition VALUES('48', 'pyeongchang2018 cross country skiing print classic men', '25', '2');
+INSERT INTO OG_Competition VALUES('49', 'pyeongchang2018 cross country skiing team sprint free men', '26', '2');
+INSERT INTO OG_Competition VALUES('50', 'pyeongchang2018 cross country skiing sprint classic women', '27', '2');
+INSERT INTO OG_Competition VALUES('51', 'pyeongchang2018 cross country skiing team sprint free women', '28', '2');
+INSERT INTO OG_Competition VALUES('52', 'sochi2014 cross country skiing print classic men', '25', '1');
+INSERT INTO OG_Competition VALUES('53', 'sochi2014 cross country skiing team sprint free men', '26', '1');
+INSERT INTO OG_Competition VALUES('54', 'sochi2014 cross country skiing sprint classic women', '27', '1');
+INSERT INTO OG_Competition VALUES('55', 'sochi2014 cross country skiing team sprint free women', '28', '1');
+INSERT INTO OG_Competition VALUES('56', 'pyeongchang2018 curling men', '29', '2');
+INSERT INTO OG_Competition VALUES('57', 'pyeongchang2018 curling women', '30', '2');
+INSERT INTO OG_Competition VALUES('58', 'pyeongchang2018 curling doubles', '31', '2');
+INSERT INTO OG_Competition VALUES('59', 'sochi2014 curling men', '29', '1');
+INSERT INTO OG_Competition VALUES('60', 'sochi2014 curling women', '30', '1');
+INSERT INTO OG_Competition VALUES('61', 'pyeongchang2018 single figure skating men', '32', '2');
+INSERT INTO OG_Competition VALUES('62', 'pyeongchang2018 single figure skating women', '33', '2');
+INSERT INTO OG_Competition VALUES('63', 'pyeongchang2018 figure skating ice dance', '34', '2');
+INSERT INTO OG_Competition VALUES('64', 'pyeongchang2018 pair figure skating', '35', '2');
+INSERT INTO OG_Competition VALUES('65', 'sochi2014 single figure skating men', '32', '1');
+INSERT INTO OG_Competition VALUES('66', 'sochi2014 single figure skating women', '33', '1');
+INSERT INTO OG_Competition VALUES('67', 'sochi2014 figure skating ice dance', '34', '1');
+INSERT INTO OG_Competition VALUES('68', 'sochi2014 pair figure skating', '35', '1');
+INSERT INTO OG_Competition VALUES('69', 'pyeongchang2018 freestyle skiing aerials men', '36', '2');
+INSERT INTO OG_Competition VALUES('70', 'pyeongchang2018 freestyle skiing moguls men', '37', '2');
+INSERT INTO OG_Competition VALUES('71', 'pyeongchang2018 freestyle skiing ski cross men', '38', '2');
+INSERT INTO OG_Competition VALUES('72', 'pyeongchang2018 freestyle skiing aerials women', '39', '2');
+INSERT INTO OG_Competition VALUES('73', 'pyeongchang2018 freestyle skiing moguls women', '40', '2');
+INSERT INTO OG_Competition VALUES('74', 'pyeongchang2018 freestyle skiing ski cross women', '41', '2');
+INSERT INTO OG_Competition VALUES('75', 'sochi2014 freestyle skiing aerials men', '36', '1');
+INSERT INTO OG_Competition VALUES('76', 'sochi2014 freestyle skiing moguls men', '37', '1');
+INSERT INTO OG_Competition VALUES('77', 'sochi2014 freestyle skiing ski cross men', '38', '1');
+INSERT INTO OG_Competition VALUES('78', 'sochi2014 freestyle skiing aerials women', '39', '1');
+INSERT INTO OG_Competition VALUES('79', 'sochi2014 freestyle skiing moguls women', '40', '1');
+INSERT INTO OG_Competition VALUES('80', 'sochi2014 freestyle skiing ski cross women', '41', '1');
+INSERT INTO OG_Competition VALUES('81', 'pyeongchang2018 ice hockey men', '42', '2');
+INSERT INTO OG_Competition VALUES('82', 'pyeongchang2018 ice hockey women', '43', '2');
+INSERT INTO OG_Competition VALUES('83', 'sochi2014 ice hockey men', '42', '1');
+INSERT INTO OG_Competition VALUES('84', 'sochi2014 ice hockey women', '43', '1');
+INSERT INTO OG_Competition VALUES('85', 'pyeongchang2018 luge singles men', '44', '2');
+INSERT INTO OG_Competition VALUES('86', 'pyeongchang2018 luge singles women', '45', '2');
+INSERT INTO OG_Competition VALUES('87', 'pyeongchang2018 luge doubles', '46', '2');
+INSERT INTO OG_Competition VALUES('88', 'pyeongchang2018 luge team relay', '47', '2');
+INSERT INTO OG_Competition VALUES('89', 'sochi2014 luge singles men', '44', '1');
+INSERT INTO OG_Competition VALUES('90', 'sochi2014 luge singles women', '45', '1');
+INSERT INTO OG_Competition VALUES('91', 'sochi2014 luge doubles', '46', '1');
+INSERT INTO OG_Competition VALUES('92', 'sochi2014 luge team relay', '47', '1');
+INSERT INTO OG_Competition VALUES('93', 'pyeongchang2018 nordic combined individual gundersen large hill/10km men', '48', '2');
+INSERT INTO OG_Competition VALUES('94', 'pyeongchang2018 nordic combined individual gundersen normal hill men', '49', '2');
+INSERT INTO OG_Competition VALUES('95', 'pyeongchang2018 nordic combined team gundersen larger hill men', '50', '2');
+INSERT INTO OG_Competition VALUES('96', 'sochi2014 nordic combined individual gundersen large hill/10km men', '48', '1');
+INSERT INTO OG_Competition VALUES('97', 'sochi2014 nordic combined individual gundersen normal hill men', '49', '1');
+INSERT INTO OG_Competition VALUES('98', 'sochi2014 nordic combined team gundersen larger hill men', '50', '1');
+INSERT INTO OG_Competition VALUES('99', 'pyeongchang2018 short track 1000m men', '51', '2');
+INSERT INTO OG_Competition VALUES('100', 'pyeongchang2018 short track 1500m men', '52', '2');
+INSERT INTO OG_Competition VALUES('101', 'pyeongchang2018 short track 500m men', '53', '2');
+INSERT INTO OG_Competition VALUES('102', 'pyeongchang2018 short track 1000m women', '54', '2');
+INSERT INTO OG_Competition VALUES('103', 'pyeongchang2018 short track 1500m women', '55', '2');
+INSERT INTO OG_Competition VALUES('104', 'pyeongchang2018 short track 500m women', '56', '2');
+INSERT INTO OG_Competition VALUES('105', 'sochi2014 short track 1000m men', '51', '1');
+INSERT INTO OG_Competition VALUES('106', 'sochi2014 short track 1500m men', '52', '1');
+INSERT INTO OG_Competition VALUES('107', 'sochi2014 short track 500m men', '53', '1');
+INSERT INTO OG_Competition VALUES('108', 'sochi2014 short track 1000m women', '54', '1');
+INSERT INTO OG_Competition VALUES('109', 'sochi2014 short track 1500m women', '55', '1');
+INSERT INTO OG_Competition VALUES('110', 'sochi2014 short track 500m women', '56', '1');
+INSERT INTO OG_Competition VALUES('111', 'pyeongchang2018 skeleton men', '57', '2');
+INSERT INTO OG_Competition VALUES('112', 'pyeongchang2018 skeleton women', '58', '2');
+INSERT INTO OG_Competition VALUES('113', 'sochi2014 skeleton men', '57', '1');
+INSERT INTO OG_Competition VALUES('114', 'sochi2014 skeleton women', '58', '1');
+INSERT INTO OG_Competition VALUES('115', 'pyeongchang2018 ski jumping large hill individual men', '59', '2');
+INSERT INTO OG_Competition VALUES('116', 'pyeongchang2018 ski jumping normal hill individual men', '60', '2');
+INSERT INTO OG_Competition VALUES('117', 'pyeongchang2018 ski jumping team men', '61', '2');
+INSERT INTO OG_Competition VALUES('118', 'pyeongchang2018 ski jumping normal hill individual women', '62', '2');
+INSERT INTO OG_Competition VALUES('119', 'sochi2014 ski jumping large hill individual men', '59', '1');
+INSERT INTO OG_Competition VALUES('120', 'sochi2014 ski jumping normal hill individual men', '60', '1');
+INSERT INTO OG_Competition VALUES('121', 'sochi2014 ski jumping team men', '61', '1');
+INSERT INTO OG_Competition VALUES('122', 'sochi2014 ski jumping normal hill individual women', '62', '1');
+INSERT INTO OG_Competition VALUES('123', 'pyeongchang2018 snowboard big air men', '63', '2');
+INSERT INTO OG_Competition VALUES('124', 'pyeongchang2018 snowboard halfpipe men', '64', '2');
+INSERT INTO OG_Competition VALUES('125', 'pyeongchang2018 snowboard slopestyle men', '65', '2');
+INSERT INTO OG_Competition VALUES('126', 'pyeongchang2018 snowboard cross men', '66', '2');
+INSERT INTO OG_Competition VALUES('127', 'pyeongchang2018 snowboard big air women', '67', '2');
+INSERT INTO OG_Competition VALUES('128', 'pyeongchang2018 snowboard halfpipe women', '68', '2');
+INSERT INTO OG_Competition VALUES('129', 'pyeongchang2018 snowboard slopestyle women', '69', '2');
+INSERT INTO OG_Competition VALUES('130', 'pyeongchang2018 snowboard cross women', '70', '2');
+INSERT INTO OG_Competition VALUES('131', 'sochi2014 snowboard halfpipe men', '64', '1');
+INSERT INTO OG_Competition VALUES('132', 'sochi2014 snowboard slopestyle men', '65', '1');
+INSERT INTO OG_Competition VALUES('133', 'sochi2014 snowboard cross men', '66', '1');
+INSERT INTO OG_Competition VALUES('134', 'sochi2014 snowboard halfpipe women', '68', '1');
+INSERT INTO OG_Competition VALUES('135', 'sochi2014 snowboard slopestyle women', '69', '1');
+INSERT INTO OG_Competition VALUES('136', 'sochi2014 snowboard cross women', '70', '1');
+INSERT INTO OG_Competition VALUES('137', 'pyeongchang2018 speed skating 10000m men', '71', '2');
+INSERT INTO OG_Competition VALUES('138', 'pyeongchang2018 speed skating 1000m men', '72', '2');
+INSERT INTO OG_Competition VALUES('139', 'pyeongchang2018 speed skating 1500m men', '73', '2');
+INSERT INTO OG_Competition VALUES('140', 'pyeongchang2018 speed skating 5000m men', '74', '2');
+INSERT INTO OG_Competition VALUES('141', 'pyeongchang2018 speed skating 500m men', '75', '2');
+INSERT INTO OG_Competition VALUES('142', 'pyeongchang2018 speed skating 3000m women', '76', '2');
+INSERT INTO OG_Competition VALUES('143', 'pyeongchang2018 speed skating 1000m women', '77', '2');
+INSERT INTO OG_Competition VALUES('144', 'pyeongchang2018 speed skating 1500m women', '78', '2');
+INSERT INTO OG_Competition VALUES('145', 'pyeongchang2018 speed skating 5000m women', '79', '2');
+INSERT INTO OG_Competition VALUES('146', 'pyeongchang2018 speed skating 500m women', '80', '2');
+INSERT INTO OG_Competition VALUES('147', 'sochi2014 speed skating 10000m men', '71', '1');
+INSERT INTO OG_Competition VALUES('148', 'sochi2014 speed skating 1000m men', '72', '1');
+INSERT INTO OG_Competition VALUES('149', 'sochi2014 speed skating 1500m men', '73', '1');
+INSERT INTO OG_Competition VALUES('150', 'sochi2014 speed skating 5000m men', '74', '1');
+INSERT INTO OG_Competition VALUES('151', 'sochi2014 speed skating 500m men', '75', '1');
+INSERT INTO OG_Competition VALUES('152', 'sochi2014 speed skating 3000m women', '76', '1');
+INSERT INTO OG_Competition VALUES('153', 'sochi2014 speed skating 1000m women', '77', '1');
+INSERT INTO OG_Competition VALUES('154', 'sochi2014 speed skating 1500m women', '78', '1');
+INSERT INTO OG_Competition VALUES('155', 'sochi2014 speed skating 5000m women', '79', '1');
+INSERT INTO OG_Competition VALUES('156', 'sochi2014 speed skating 500m women', '80', '1');
+
+
+
+
+
+
+
+INSERT INTO OG_Country VALUES('AND', 'Andorra');
+INSERT INTO OG_Country VALUES('ALB', 'Albania');
+INSERT INTO OG_Country VALUES('DZA', 'Algeria');
+INSERT INTO OG_Country VALUES('ARG', 'Argentina');
+INSERT INTO OG_Country VALUES('ARM', 'Armenia');
+INSERT INTO OG_Country VALUES('AUS', 'Australia');
+INSERT INTO OG_Country VALUES('AUT', 'Austria');
+INSERT INTO OG_Country VALUES('AZE', 'Azerbaijan');
+INSERT INTO OG_Country VALUES('BLR', 'Belarus');
+INSERT INTO OG_Country VALUES('BEL', 'Belgium');
+INSERT INTO OG_Country VALUES('BMU', 'Bermuda');
+INSERT INTO OG_Country VALUES('BOL', 'Bolivia');
+INSERT INTO OG_Country VALUES('BIH', 'Bosnia and Herzegovina');
+INSERT INTO OG_Country VALUES('BRA', 'Brazil');
+INSERT INTO OG_Country VALUES('BGR', 'Bulgaria');
+INSERT INTO OG_Country VALUES('CMR', 'Cameroon');
+INSERT INTO OG_Country VALUES('CAN', 'Canada');
+INSERT INTO OG_Country VALUES('CYM', 'Cayman islands');
+INSERT INTO OG_Country VALUES('CHL', 'Chile');
+INSERT INTO OG_Country VALUES('CHN', 'China');
+INSERT INTO OG_Country VALUES('COL', 'Colombia');
+INSERT INTO OG_Country VALUES('CRI', 'Costa Rica');
+INSERT INTO OG_Country VALUES('CRO', 'Croatia');
+INSERT INTO OG_Country VALUES('CYP', 'Cyprus');
+INSERT INTO OG_Country VALUES('CZE', 'Czech Republic');
+INSERT INTO OG_Country VALUES('DNK', 'Denmark');
+INSERT INTO OG_Country VALUES('DMA', 'Dominica');
+INSERT INTO OG_Country VALUES('ECU', 'Ecuador');
+INSERT INTO OG_Country VALUES('ERI', 'Eritrea');
+INSERT INTO OG_Country VALUES('EST', 'Estonia');
+INSERT INTO OG_Country VALUES('ETH', 'Ethiopia');
+INSERT INTO OG_Country VALUES('FJI', 'Fiji');
+INSERT INTO OG_Country VALUES('FIN', 'Finland');
+INSERT INTO OG_Country VALUES('FRA', 'France');
+INSERT INTO OG_Country VALUES('GEO', 'Georgia');
+INSERT INTO OG_Country VALUES('GER', 'Germany');
+INSERT INTO OG_Country VALUES('GHA', 'Ghana');
+INSERT INTO OG_Country VALUES('GBR', 'Great Britain');
+INSERT INTO OG_Country VALUES('GRC', 'Greece');
+INSERT INTO OG_Country VALUES('HKG', 'Hong Kong');
+INSERT INTO OG_Country VALUES('HUN', 'Hungary');
+INSERT INTO OG_Country VALUES('ISL', 'Iceland');
+INSERT INTO OG_Country VALUES('IND', 'India');
+INSERT INTO OG_Country VALUES('IRN', 'Iran');
+INSERT INTO OG_Country VALUES('IRL', 'Ireland');
+INSERT INTO OG_Country VALUES('ISR', 'Israel');
+INSERT INTO OG_Country VALUES('ITA', 'Italy');
+INSERT INTO OG_Country VALUES('JAM', 'Jamaica');
+INSERT INTO OG_Country VALUES('JPN', 'Japan');
+INSERT INTO OG_Country VALUES('KAZ', 'Kazakhstan');
+INSERT INTO OG_Country VALUES('KEN', 'Kenya');
+INSERT INTO OG_Country VALUES('PRK', 'North Korea');
+INSERT INTO OG_Country VALUES('KOR', 'South Korea');
+INSERT INTO OG_Country VALUES('KGZ', 'Kyrgyzstan');
+INSERT INTO OG_Country VALUES('LAT', 'Latvia');
+INSERT INTO OG_Country VALUES('LBN', 'Lebanon');
+INSERT INTO OG_Country VALUES('LIE', 'Liechtenstein');
+INSERT INTO OG_Country VALUES('LTU', 'Lithuania');
+INSERT INTO OG_Country VALUES('LUX', 'Luxembourg');
+INSERT INTO OG_Country VALUES('MKD', 'Macedonia');
+INSERT INTO OG_Country VALUES('MLT', 'Malta');
+INSERT INTO OG_Country VALUES('MDG', 'Madagascar');
+INSERT INTO OG_Country VALUES('MYS', 'Malaysia');
+INSERT INTO OG_Country VALUES('MEX', 'Mexico');
+INSERT INTO OG_Country VALUES('MDA', 'Moldova');
+INSERT INTO OG_Country VALUES('MCO', 'Monaco');
+INSERT INTO OG_Country VALUES('MNG', 'Mongolia');
+INSERT INTO OG_Country VALUES('MNE', 'Montenegro');
+INSERT INTO OG_Country VALUES('MAR', 'Morocco');
+INSERT INTO OG_Country VALUES('NPL', 'Nepal');
+INSERT INTO OG_Country VALUES('NED', 'Netherlands');
+INSERT INTO OG_Country VALUES('NZL', 'New Zealand');
+INSERT INTO OG_Country VALUES('NGA', 'Nigeria');
+INSERT INTO OG_Country VALUES('NOR', 'Norway');
+INSERT INTO OG_Country VALUES('PRY', 'Paraguay');
+INSERT INTO OG_Country VALUES('PAK', 'Pakistan');
+INSERT INTO OG_Country VALUES('PER', 'Peru');
+INSERT INTO OG_Country VALUES('PHL', 'Philippines');
+INSERT INTO OG_Country VALUES('POL', 'Poland');
+INSERT INTO OG_Country VALUES('PRI', 'Puerto Rico');
+INSERT INTO OG_Country VALUES('PRT', 'Portugal');
+INSERT INTO OG_Country VALUES('ROU', 'Romania');
+INSERT INTO OG_Country VALUES('RUS', 'Russia');
+INSERT INTO OG_Country VALUES('SMR', 'San Marino');
+INSERT INTO OG_Country VALUES('SEN', 'Senegal');
+INSERT INTO OG_Country VALUES('SRB', 'Serbia and Montenegro');
+INSERT INTO OG_Country VALUES('SGP', 'Singapore');
+INSERT INTO OG_Country VALUES('SVK', 'Slovakia');
+INSERT INTO OG_Country VALUES('SLO', 'Slovenia');
+INSERT INTO OG_Country VALUES('ZAF', 'South Africa');
+INSERT INTO OG_Country VALUES('ESP', 'Spain');
+INSERT INTO OG_Country VALUES('SWE', 'Sweden');
+INSERT INTO OG_Country VALUES('SUI', 'Switzerland');
+INSERT INTO OG_Country VALUES('TWN', 'Chinese Taipei');
+INSERT INTO OG_Country VALUES('TJK', 'Tajikistan');
+INSERT INTO OG_Country VALUES('THA', 'Thailand');
+INSERT INTO OG_Country VALUES('TGO', 'Togo');
+INSERT INTO OG_Country VALUES('TON', 'Tonga');
+INSERT INTO OG_Country VALUES('TTO', 'Trinidad and Tobago');
+INSERT INTO OG_Country VALUES('TUR', 'Turkey');
+INSERT INTO OG_Country VALUES('UKR', 'Ukraine');
+INSERT INTO OG_Country VALUES('USA', 'United States');
+INSERT INTO OG_Country VALUES('UZB', 'Uzbekistan');
+INSERT INTO OG_Country VALUES('VEN', 'Venezuela');
+INSERT INTO OG_Country VALUES('VIR', 'Virgin Islands');
+INSERT INTO OG_Country VALUES('ZWE', 'Zimbabwe');
+
+
+
+
+
+
+
+INSERT INTO OG_Athlete VALUES('1', 'marcel hirscher', '1989', 'AUS', 'M');
+INSERT INTO OG_Athlete VALUES('2', 'alexis pinturault', '1991', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('3', 'victor muffat-jeandet', '1989', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('4', 'sandro viletta', '1986', 'SUI', 'M');
+INSERT INTO OG_Athlete VALUES('5', 'ivica kostelic', '1979', 'CRO', 'M');
+INSERT INTO OG_Athlete VALUES('6', 'christof innerhofer', '1984', 'ITA', 'M');
+INSERT INTO OG_Athlete VALUES('7', 'aksel lund svindal', '1982', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('8', 'kjetil jansrud', '1985', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('9', 'beat feuz', '1987', 'SUI', 'M');
+INSERT INTO OG_Athlete VALUES('10', 'matthias mayer', '1990', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('11', 'henrik kristoffersen', '1994', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('12', 'ted ligety', '1984', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('13', 'steve missillier', '1984', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('14', 'andre myhrer', '1983', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('15', 'ramon zenhaeusern', '1992', 'SUI', 'M');
+INSERT INTO OG_Athlete VALUES('16', 'michael matt', '1993', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('17', 'mario matt', '1979', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('18', 'andrew weibrecht', '1986', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('19', 'bode miller', '1977', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('20', 'jan hudec', '1981', 'CZE', 'M');
+INSERT INTO OG_Athlete VALUES('21', 'michelle gisin', '1993', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('22', 'mikaela shiffrin', '1995', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('23', 'wendy holdener', '1993', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('24', 'maria riesch', '1984', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('25', 'nicole hosp', '1983', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('26', 'julia mancuso', '1984', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('27', 'sofia goggia', '1992', 'ITA', 'F');
+INSERT INTO OG_Athlete VALUES('28', 'ragnhild mowinckel', '1992', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('29', 'lindsey vonn', '1984', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('30', 'tina maze', '1983', 'SLO', 'F');
+INSERT INTO OG_Athlete VALUES('31', 'dominique gisin', '1985', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('32', 'lara gut', '1981', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('33', 'federica brignone', '1990', 'ITA', 'F');
+INSERT INTO OG_Athlete VALUES('34', 'anna fenninger', '1989', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('35', 'viktoria rebensburg', '1989', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('36', 'frida hansdotter', '1985', 'SWE', 'F');
+INSERT INTO OG_Athlete VALUES('37', 'katharina gallhuber', '1997', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('38', 'marlies schild', '1981', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('39', 'kathrin zettel', '1986', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('40', 'ester ledecka', '1995', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('41', 'tina weirather', '1989', 'LIE', 'F');
+INSERT INTO OG_Athlete VALUES('42', 'kristin lysdahl', '1996', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('43', 'sebastian foss-solevag', '1991', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('44', 'arnd peiffer', '1987', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('45', 'michal krcmar', '1991', 'CZE', 'M');
+INSERT INTO OG_Athlete VALUES('46', 'dominik windisch', '1989', 'ITA', 'M');
+INSERT INTO OG_Athlete VALUES('47', 'ole einar bjoerndalen', '1974', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('48', 'dominik landertinger', '1988', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('49', 'jaroslav soukup', '1982', 'CZE', 'M');
+INSERT INTO OG_Athlete VALUES('50', 'martion fourcade', '1988', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('51', 'sebastian samuelsson', '1997', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('52', 'benedikt doll', '1990', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('53', 'ondrej moravec', '1984', 'CZE', 'M');
+INSERT INTO OG_Athlete VALUES('54', 'jean guillaume beatrix', '1988', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('55', 'simon schempp', '1988', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('56', 'emil hegle svendsen', '1985', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('57', 'johannes thingnes boe', '1993', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('58', 'jakov fak', '1987', 'SLO', 'M');
+INSERT INTO OG_Athlete VALUES('59', 'erik lesser', '1988', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('60', 'evgeniy garanichev', '1988', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('61', 'laura dahlmeier', '1993', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('62', 'anastazia kuzmina', '1984', 'SVK', 'F');
+INSERT INTO OG_Athlete VALUES('63', 'anais bescond', '1987', 'FRA', 'F');
+INSERT INTO OG_Athlete VALUES('64', 'darya domracheva', '1986', 'BLR', 'F');
+INSERT INTO OG_Athlete VALUES('65', 'tora berger', '1981', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('66', 'teja gregorin', '1980', 'SLO', 'F');
+INSERT INTO OG_Athlete VALUES('67', 'tiril eckhoff', '1990', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('68', 'gabriela soukalova', '1989', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('69', 'hanna oeberg', '1995', 'SWE', 'F');
+INSERT INTO OG_Athlete VALUES('70', 'selina gasparin', '1984', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('71', 'nadezhda skardino', '1985', 'BLR', 'F');
+INSERT INTO OG_Athlete VALUES('72', 'marte olsbu', '1990', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('73', 'veronika vitkova', '1988', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('74', 'vita semerenko', '1986', 'UKR', 'F');
+INSERT INTO OG_Athlete VALUES('75', 'justin kripps', '1987', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('76', 'janis strenga', '1986', 'LAT', 'M');
+INSERT INTO OG_Athlete VALUES('77', 'candy bauer', '1986', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('78', 'nico walther', '1990', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('79', 'lisa buckwitz', '1994', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('80', 'lauren gibbs', '1984', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('81', 'phylicia george', '1987', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('82', 'johannes hoesflot klaebo', '1996', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('83', 'federico pellegrino', '1990', 'ITA', 'M');
+INSERT INTO OG_Athlete VALUES('84', 'alexander bolshunov', '1996', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('85', 'ola vigen hattestad', '1982', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('86', 'teodor peterson', '1988', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('87', 'emil joensson', '1985', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('88', 'livo niskanen', '1992', 'FIN', 'M');
+INSERT INTO OG_Athlete VALUES('89', 'stina nilsson', '1993', 'SWE', 'F');
+INSERT INTO OG_Athlete VALUES('90', 'maiken caspersen falla', '1990', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('91', 'yulia belorukova', '1995', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('92', 'ingvild flugstad', '1990', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('93', 'vesna fabjan', '1985', 'SLO', 'F');
+INSERT INTO OG_Athlete VALUES('94', 'kerttu niskanen', '1988', 'FIN', 'F');
+INSERT INTO OG_Athlete VALUES('95', 'brad jacobs', '1985', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('96', 'david murdoch', '1978', 'GBR', 'M');
+INSERT INTO OG_Athlete VALUES('97', 'niklas edin', '1985', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('98', 'jennifer jones', '1974', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('99', 'margaretha sigfridsson', '1976', 'SWE', 'F');
+INSERT INTO OG_Athlete VALUES('100', 'eve muirhead', '1990', 'GBR', 'F');
+INSERT INTO OG_Athlete VALUES('101', 'john shuster', '1982', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('102', 'benoit schwarz', '1991', 'SUI', 'M');
+INSERT INTO OG_Athlete VALUES('103', 'anna hasselborg', '1989', 'SWE', 'F');
+INSERT INTO OG_Athlete VALUES('104', 'kim eun-jung', '1990', 'KOR', 'F');
+INSERT INTO OG_Athlete VALUES('105', 'satsuki fujisawa', '1991', 'JPN', 'F');
+INSERT INTO OG_Athlete VALUES('106', 'kaitlyn lawes', '1988', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('107', 'jenny perret', '1991', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('108', 'kristin skaslien', '1986', 'NOR', 'F');
+INSERT INTO OG_Athlete VALUES('109', 'yuzuru hanyu', '1994', 'JPN', 'M');
+INSERT INTO OG_Athlete VALUES('110', 'shoma uno', '1997', 'JPN', 'M');
+INSERT INTO OG_Athlete VALUES('111', 'javier fernandez', '1991', 'ESP', 'M');
+INSERT INTO OG_Athlete VALUES('112', 'patrick chan', '1990', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('113', 'denis ten', '1993', 'KAZ', 'M');
+INSERT INTO OG_Athlete VALUES('114', 'alina zagitova', '2002', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('115', 'evgenia medvedeva', '1999', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('116', 'kaetlyn osmond', '1995', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('117', 'adelina sotnikova', '1996', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('118', 'yuna kim', '1990', 'KOR', 'F');
+INSERT INTO OG_Athlete VALUES('119', 'carolina kostner', '1987', 'ITA', 'F');
+INSERT INTO OG_Athlete VALUES('120', 'aliona', '1984', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('121', 'bruno', '1989', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('122', 'sui wenjing', '1995', 'CHN', 'F');
+INSERT INTO OG_Athlete VALUES('123', 'han cong', '1992', 'CHN', 'M');
+INSERT INTO OG_Athlete VALUES('124', 'meagan', '1985', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('125', 'eric', '1985', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('126', 'tessa', '1989', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('127', 'scott', '1987', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('128', 'gabriella', '1995', 'FRA', 'F');
+INSERT INTO OG_Athlete VALUES('129', 'guillaume', '1994', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('130', 'maia', '1994', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('131', 'alex', '1991', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('132', 'meryl davis', '1987', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('133', 'elena llinykh', '1994', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('134', 'maxim trankov', '1983', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('135', 'ksenia stolbova', '1992', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('136', 'oleksandr', '1988', 'GBR', 'M');
+INSERT INTO OG_Athlete VALUES('137', 'anton', '1984', 'BLR', 'M');
+INSERT INTO OG_Athlete VALUES('138', 'mikael', '1992', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('139', 'alexandre', '1987', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('140', 'brady leman', '1986', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('141', 'jean frederic', '1989', 'FRA', 'M');
+INSERT INTO OG_Athlete VALUES('142', 'hanna', '1992', 'BLR', 'F');
+INSERT INTO OG_Athlete VALUES('143', 'alla', '1979', 'BLR', 'F');
+INSERT INTO OG_Athlete VALUES('144', 'perrine', '1998', 'FRA', 'F');
+INSERT INTO OG_Athlete VALUES('145', 'justine', '1994', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('146', 'kelsey', '1989', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('147', 'marielle', '1992', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('148', 'sergei', '1989', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('149', 'sinan', '1989', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('150', 'rene', '1981', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('151', 'cayla', '1999', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('152', 'meghan', '1987', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('153', 'sanni', '1997', 'FIN', 'F');
+INSERT INTO OG_Athlete VALUES('154', 'jamie', '1989', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('155', 'daniel', '1972', 'SWE', 'M');
+INSERT INTO OG_Athlete VALUES('156', 'juhamatti', '1985', 'FIN', 'M');
+INSERT INTO OG_Athlete VALUES('157', 'meghan', '1987', 'CAN', 'F');
+INSERT INTO OG_Athlete VALUES('158', 'kacey', '1987', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('159', 'janine', '1995', 'SUI', 'F');
+INSERT INTO OG_Athlete VALUES('160', 'david', '1994', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('161', 'felix', '1989', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('162', 'natalie', '1988', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('163', 'tobias', '1987', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('167', 'fabian', '1990', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('168', 'magnus', '1983', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('169', 'akito', '1988', 'JPN', 'M');
+INSERT INTO OG_Athlete VALUES('170', 'jan schmid', '1983', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('171', 'samuel', '1996', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('172', 'victor', '1985', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('173', 'hyo jun', '1996', 'KOR', 'M');
+INSERT INTO OG_Athlete VALUES('174', 'charles', '1984', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('175', 'dajing wu', '1994', 'CHN', 'M');
+INSERT INTO OG_Athlete VALUES('176', 'suzanne', '1997', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('177', 'seung-hi', '1992', 'KOR', 'F');
+INSERT INTO OG_Athlete VALUES('178', 'minjeong', '1998', 'KOR', 'F');
+INSERT INTO OG_Athlete VALUES('179', 'yang zhou', '1991', 'CHN', 'F');
+INSERT INTO OG_Athlete VALUES('180', 'arianna', '1990', 'ITA', 'F');
+INSERT INTO OG_Athlete VALUES('181', 'jianrou li', '1986', 'CHN', 'F');
+INSERT INTO OG_Athlete VALUES('182', 'sungbin', '1994', 'KOR', 'M');
+INSERT INTO OG_Athlete VALUES('183', 'nikita', '1995', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('184', 'dominic', '1987', 'GBR', 'M');
+INSERT INTO OG_Athlete VALUES('185', 'alexander', '1985', 'RUS', 'M');
+INSERT INTO OG_Athlete VALUES('186', 'martins', '1984', 'LAT', 'M');
+INSERT INTO OG_Athlete VALUES('187', 'matthew', '1985', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('188', 'elizabeth', '1988', 'GBR', 'F');
+INSERT INTO OG_Athlete VALUES('189', 'jacqueline', '1995', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('190', 'laura deas', '1988', 'GBR', 'F');
+INSERT INTO OG_Athlete VALUES('191', 'noelle', '1982', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('192', 'elena', '1992', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('193', 'andreas', '1995', 'GER', 'M');
+INSERT INTO OG_Athlete VALUES('194', 'noriaki', '1972', 'JPN', 'M');
+INSERT INTO OG_Athlete VALUES('195', 'johann', '1995', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('196', 'peter', '1992', 'SLO', 'M');
+INSERT INTO OG_Athlete VALUES('197', 'katharina althaus', '1996', 'GER', 'F');
+INSERT INTO OG_Athlete VALUES('198', 'daniela', '1983', 'AUT', 'F');
+INSERT INTO OG_Athlete VALUES('199', 'thomas', '1992', 'AUT', 'M');
+INSERT INTO OG_Athlete VALUES('200', 'billy', '1989', 'GBR', 'M');
+INSERT INTO OG_Athlete VALUES('201', 'scott', '1994', 'AUS', 'M');
+INSERT INTO OG_Athlete VALUES('202', 'taku', '1995', 'JPN', 'M');
+INSERT INTO OG_Athlete VALUES('203', 'mark', '1993', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('204', 'regino', '1991', 'ESP', 'M');
+INSERT INTO OG_Athlete VALUES('205', 'zoi sadowski', '2001', 'NZL', 'F');
+INSERT INTO OG_Athlete VALUES('206', 'arielle', '1996', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('207', 'enni', '1990', 'FIN', 'F');
+INSERT INTO OG_Athlete VALUES('208', 'eva', '1993', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('209', 'alex deibole', '1986', 'USA', 'M');
+INSERT INTO OG_Athlete VALUES('210', 'kelly clark', '1983', 'USA', 'F');
+INSERT INTO OG_Athlete VALUES('211', 'jenny jones', '1980', 'GBR', 'F');
+INSERT INTO OG_Athlete VALUES('212', 'chloe', '1994', 'FRA', 'F');
+INSERT INTO OG_Athlete VALUES('213', 'havard', '1992', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('214', 'cha min kyu', '1993', 'KOR', 'M');
+INSERT INTO OG_Athlete VALUES('215', 'gao tingyu', '1997', 'CHN', 'M');
+INSERT INTO OG_Athlete VALUES('216', 'kjeld nuiss', '1989', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('217', 'kim tae yun', '1994', 'KOR', 'M');
+INSERT INTO OG_Athlete VALUES('218', 'patrick', '1995', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('219', 'kim min seok', '1999', 'KOR', 'M');
+INSERT INTO OG_Athlete VALUES('220', 'sven', '1986', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('221', 'ted jan', '1986', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('222', 'sverre', '1992', 'NOR', 'M');
+INSERT INTO OG_Athlete VALUES('223', 'jorrit', '1986', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('224', 'nicola', '1994', 'ITA', 'M');
+INSERT INTO OG_Athlete VALUES('225', 'nao kodaira', '1986', 'JPN', 'F');
+INSERT INTO OG_Athlete VALUES('226', 'lee sang', '1989', 'KOR', 'F');
+INSERT INTO OG_Athlete VALUES('227', 'karolina', '1992', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('228', 'jorien', '1989', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('229', 'miho', '1994', 'JPN', 'F');
+INSERT INTO OG_Athlete VALUES('230', 'ireen', '1986', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('231', 'marrit', '1989', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('232', 'carlijn', '1990', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('233', 'antoinette', '1995', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('234', 'esmee', '1996', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('235', 'martina', '1987', 'CZE', 'F');
+INSERT INTO OG_Athlete VALUES('236', 'natalya', '1994', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('237', 'michel mulder', '1986', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('238', 'jan smeekens', '1987', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('239', 'ronald', '1986', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('240', 'stefan', '1981', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('241', 'denny', '1985', 'CAN', 'M');
+INSERT INTO OG_Athlete VALUES('242', 'zbigniew', '1984', 'POL', 'M');
+INSERT INTO OG_Athlete VALUES('243', 'koen', '1990', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('244', 'bob', '1976', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('245', 'jan blokhuijsen', '1989', 'NED', 'M');
+INSERT INTO OG_Athlete VALUES('246', 'olga fatkulina', '1990', 'RUS', 'F');
+INSERT INTO OG_Athlete VALUES('247', 'margot', '1985', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('248', 'zhang hong', '1988', 'CHN', 'F');
+INSERT INTO OG_Athlete VALUES('249', 'lotte', '1991', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('250', 'carien', '1978', 'NED', 'F');
+INSERT INTO OG_Athlete VALUES('251', 'olga graf', '1983', 'RUS', 'F');
+
+
+
+
+
+
+
+
+INSERT INTO OG_Result VALUES('1', '1', 'G');
+INSERT INTO OG_Result VALUES('1', '2', 'S');
+INSERT INTO OG_Result VALUES('1', '3', 'B');
+INSERT INTO OG_Result VALUES('2', '21', 'G');
+INSERT INTO OG_Result VALUES('2', '22', 'S');
+INSERT INTO OG_Result VALUES('2', '23', 'B');
+INSERT INTO OG_Result VALUES('3', '7', 'G');
+INSERT INTO OG_Result VALUES('3', '8', 'S');
+INSERT INTO OG_Result VALUES('3', '9', 'B');
+INSERT INTO OG_Result VALUES('4', '27', 'G');
+INSERT INTO OG_Result VALUES('4', '28', 'S');
+INSERT INTO OG_Result VALUES('4', '29', 'B');
+INSERT INTO OG_Result VALUES('5', '1', 'G');
+INSERT INTO OG_Result VALUES('5', '11', 'S');
+INSERT INTO OG_Result VALUES('5', '2', 'B');
+INSERT INTO OG_Result VALUES('6', '22', 'G');
+INSERT INTO OG_Result VALUES('6', '28', 'S');
+INSERT INTO OG_Result VALUES('6', '33', 'B');
+INSERT INTO OG_Result VALUES('7', '14', 'G');
+INSERT INTO OG_Result VALUES('7', '15', 'S');
+INSERT INTO OG_Result VALUES('7', '16', 'B');
+INSERT INTO OG_Result VALUES('8', '36', 'G');
+INSERT INTO OG_Result VALUES('8', '23', 'S');
+INSERT INTO OG_Result VALUES('8', '37', 'B');
+INSERT INTO OG_Result VALUES('9', '10', 'G');
+INSERT INTO OG_Result VALUES('9', '9', 'S');
+INSERT INTO OG_Result VALUES('9', '8', 'B');
+INSERT INTO OG_Result VALUES('10', '40', 'G');
+INSERT INTO OG_Result VALUES('10', '34', 'S');
+INSERT INTO OG_Result VALUES('10', '41', 'B');
+INSERT INTO OG_Result VALUES('11', '15', 'G');
+INSERT INTO OG_Result VALUES('11', '23', 'G');
+INSERT INTO OG_Result VALUES('11', '16', 'S');
+INSERT INTO OG_Result VALUES('11', '37', 'S');
+INSERT INTO OG_Result VALUES('11', '42', 'B');
+INSERT INTO OG_Result VALUES('11', '43', 'B');
+INSERT INTO OG_Result VALUES('12', '4', 'G');
+INSERT INTO OG_Result VALUES('12', '5', 'S');
+INSERT INTO OG_Result VALUES('12', '6', 'B');
+INSERT INTO OG_Result VALUES('13', '24', 'G');
+INSERT INTO OG_Result VALUES('13', '25', 'S');
+INSERT INTO OG_Result VALUES('13', '26', 'B');
+INSERT INTO OG_Result VALUES('14', '10', 'G');
+INSERT INTO OG_Result VALUES('14', '6', 'S');
+INSERT INTO OG_Result VALUES('14', '8', 'B');
+INSERT INTO OG_Result VALUES('15', '30', 'G');
+INSERT INTO OG_Result VALUES('15', '31', 'G');
+INSERT INTO OG_Result VALUES('15', '32', 'B');
+INSERT INTO OG_Result VALUES('16', '12', 'G');
+INSERT INTO OG_Result VALUES('16', '13', 'S');
+INSERT INTO OG_Result VALUES('16', '2', 'B');
+INSERT INTO OG_Result VALUES('17', '30', 'G');
+INSERT INTO OG_Result VALUES('17', '34', 'S');
+INSERT INTO OG_Result VALUES('17', '35', 'B');
+INSERT INTO OG_Result VALUES('18', '17', 'G');
+INSERT INTO OG_Result VALUES('18', '1', 'S');
+INSERT INTO OG_Result VALUES('18', '11', 'B');
+INSERT INTO OG_Result VALUES('19', '22', 'G');
+INSERT INTO OG_Result VALUES('19', '38', 'S');
+INSERT INTO OG_Result VALUES('19', '39', 'B');
+INSERT INTO OG_Result VALUES('20', '8', 'G');
+INSERT INTO OG_Result VALUES('20', '18', 'S');
+INSERT INTO OG_Result VALUES('20', '19', 'B');
+INSERT INTO OG_Result VALUES('20', '20', 'B');
+INSERT INTO OG_Result VALUES('21', '34', 'G');
+INSERT INTO OG_Result VALUES('21', '24', 'S');
+INSERT INTO OG_Result VALUES('21', '25', 'B');
+INSERT INTO OG_Result VALUES('22', '44', 'G');
+INSERT INTO OG_Result VALUES('22', '45', 'S');
+INSERT INTO OG_Result VALUES('22', '46', 'B');
+INSERT INTO OG_Result VALUES('23', '61', 'G');
+INSERT INTO OG_Result VALUES('23', '62', 'S');
+INSERT INTO OG_Result VALUES('23', '63', 'B');
+INSERT INTO OG_Result VALUES('24', '50', 'G');
+INSERT INTO OG_Result VALUES('24', '51', 'S');
+INSERT INTO OG_Result VALUES('24', '52', 'B');
+INSERT INTO OG_Result VALUES('25', '62', 'G');
+INSERT INTO OG_Result VALUES('25', '64', 'S');
+INSERT INTO OG_Result VALUES('25', '67', 'B');
+INSERT INTO OG_Result VALUES('26', '50', 'G');
+INSERT INTO OG_Result VALUES('26', '55', 'S');
+INSERT INTO OG_Result VALUES('26', '56', 'B');
+INSERT INTO OG_Result VALUES('27', '69', 'G');
+INSERT INTO OG_Result VALUES('27', '62', 'S');
+INSERT INTO OG_Result VALUES('27', '61', 'B');
+INSERT INTO OG_Result VALUES('28', '57', 'G');
+INSERT INTO OG_Result VALUES('28', '58', 'S');
+INSERT INTO OG_Result VALUES('28', '48', 'B');
+INSERT INTO OG_Result VALUES('29', '71', 'G');
+INSERT INTO OG_Result VALUES('29', '64', 'G');
+INSERT INTO OG_Result VALUES('29', '69', 'S');
+INSERT INTO OG_Result VALUES('29', '63', 'B');
+INSERT INTO OG_Result VALUES('30', '51', 'G');
+INSERT INTO OG_Result VALUES('30', '56', 'S');
+INSERT INTO OG_Result VALUES('30', '57', 'S');
+INSERT INTO OG_Result VALUES('30', '44', 'B');
+INSERT INTO OG_Result VALUES('30', '52', 'B');
+INSERT INTO OG_Result VALUES('30', '55', 'B');
+INSERT INTO OG_Result VALUES('30', '59', 'B');
+INSERT INTO OG_Result VALUES('31', '61', 'G');
+INSERT INTO OG_Result VALUES('31', '72', 'S');
+INSERT INTO OG_Result VALUES('31', '73', 'B');
+INSERT INTO OG_Result VALUES('32', '47', 'G');
+INSERT INTO OG_Result VALUES('32', '48', 'S');
+INSERT INTO OG_Result VALUES('32', '49', 'B');
+INSERT INTO OG_Result VALUES('33', '64', 'G');
+INSERT INTO OG_Result VALUES('33', '65', 'S');
+INSERT INTO OG_Result VALUES('33', '66', 'B');
+INSERT INTO OG_Result VALUES('34', '50', 'G');
+INSERT INTO OG_Result VALUES('34', '53', 'S');
+INSERT INTO OG_Result VALUES('34', '54', 'B');
+INSERT INTO OG_Result VALUES('35', '64', 'G');
+INSERT INTO OG_Result VALUES('35', '68', 'S');
+INSERT INTO OG_Result VALUES('35', '67', 'B');
+INSERT INTO OG_Result VALUES('36', '56', 'G');
+INSERT INTO OG_Result VALUES('36', '50', 'S');
+INSERT INTO OG_Result VALUES('36', '53', 'B');
+INSERT INTO OG_Result VALUES('37', '64', 'G');
+INSERT INTO OG_Result VALUES('37', '70', 'S');
+INSERT INTO OG_Result VALUES('37', '71', 'B');
+INSERT INTO OG_Result VALUES('38', '50', 'G');
+INSERT INTO OG_Result VALUES('38', '59', 'S');
+INSERT INTO OG_Result VALUES('38', '60', 'B');
+INSERT INTO OG_Result VALUES('39', '74', 'G');
+INSERT INTO OG_Result VALUES('39', '65', 'B');
+INSERT INTO OG_Result VALUES('39', '67', 'B');
+INSERT INTO OG_Result VALUES('40', '55', 'S');
+INSERT INTO OG_Result VALUES('40', '59', 'S');
+INSERT INTO OG_Result VALUES('40', '48', 'B');
+INSERT INTO OG_Result VALUES('41', '62', 'G');
+INSERT INTO OG_Result VALUES('41', '74', 'B');
+INSERT INTO OG_Result VALUES('42', '78', 'G');
+INSERT INTO OG_Result VALUES('42', '77', 'S');
+INSERT INTO OG_Result VALUES('43', '75', 'G');
+INSERT INTO OG_Result VALUES('43', '76', 'B');
+INSERT INTO OG_Result VALUES('44', '79', 'G');
+INSERT INTO OG_Result VALUES('44', '80', 'S');
+INSERT INTO OG_Result VALUES('44', '81', 'B');
+INSERT INTO OG_Result VALUES('48', '82', 'G');
+INSERT INTO OG_Result VALUES('48', '83', 'S');
+INSERT INTO OG_Result VALUES('48', '84', 'B');
+INSERT INTO OG_Result VALUES('49', '82', 'G');
+INSERT INTO OG_Result VALUES('49', '84', 'S');
+INSERT INTO OG_Result VALUES('49', '87', 'B');
+INSERT INTO OG_Result VALUES('50', '89', 'G');
+INSERT INTO OG_Result VALUES('50', '90', 'S');
+INSERT INTO OG_Result VALUES('50', '91', 'B');
+INSERT INTO OG_Result VALUES('51', '92', 'G');
+INSERT INTO OG_Result VALUES('51', '89', 'S');
+INSERT INTO OG_Result VALUES('51', '90', 'B');
+INSERT INTO OG_Result VALUES('52', '85', 'G');
+INSERT INTO OG_Result VALUES('52', '86', 'S');
+INSERT INTO OG_Result VALUES('52', '87', 'B');
+INSERT INTO OG_Result VALUES('53', '88', 'G');
+INSERT INTO OG_Result VALUES('53', '86', 'S');
+INSERT INTO OG_Result VALUES('53', '87', 'B');
+INSERT INTO OG_Result VALUES('54', '90', 'G');
+INSERT INTO OG_Result VALUES('54', '92', 'S');
+INSERT INTO OG_Result VALUES('54', '93', 'B');
+INSERT INTO OG_Result VALUES('55', '92', 'G');
+INSERT INTO OG_Result VALUES('55', '94', 'S');
+INSERT INTO OG_Result VALUES('55', '89', 'B');
+INSERT INTO OG_Result VALUES('56', '101', 'G');
+INSERT INTO OG_Result VALUES('56', '97', 'S');
+INSERT INTO OG_Result VALUES('56', '102', 'B');
+INSERT INTO OG_Result VALUES('57', '103', 'G');
+INSERT INTO OG_Result VALUES('57', '104', 'S');
+INSERT INTO OG_Result VALUES('57', '105', 'B');
+INSERT INTO OG_Result VALUES('58', '106', 'G');
+INSERT INTO OG_Result VALUES('58', '107', 'S');
+INSERT INTO OG_Result VALUES('58', '108', 'B');
+INSERT INTO OG_Result VALUES('59', '95', 'G');
+INSERT INTO OG_Result VALUES('59', '96', 'S');
+INSERT INTO OG_Result VALUES('59', '97', 'B');
+INSERT INTO OG_Result VALUES('60', '98', 'G');
+INSERT INTO OG_Result VALUES('60', '99', 'S');
+INSERT INTO OG_Result VALUES('60', '100', 'B');
+INSERT INTO OG_Result VALUES('61', '109', 'G');
+INSERT INTO OG_Result VALUES('61', '110', 'S');
+INSERT INTO OG_Result VALUES('61', '111', 'B');
+INSERT INTO OG_Result VALUES('62', '114', 'G');
+INSERT INTO OG_Result VALUES('62', '115', 'S');
+INSERT INTO OG_Result VALUES('62', '116', 'B');
+INSERT INTO OG_Result VALUES('64', '120', 'G');
+INSERT INTO OG_Result VALUES('64', '121', 'G');
+INSERT INTO OG_Result VALUES('64', '122', 'S');
+INSERT INTO OG_Result VALUES('64', '123', 'S');
+INSERT INTO OG_Result VALUES('64', '124', 'B');
+INSERT INTO OG_Result VALUES('64', '125', 'B');
+INSERT INTO OG_Result VALUES('63', '126', 'G');
+INSERT INTO OG_Result VALUES('63', '127', 'G');
+INSERT INTO OG_Result VALUES('63', '128', 'S');
+INSERT INTO OG_Result VALUES('63', '129', 'S');
+INSERT INTO OG_Result VALUES('63', '130', 'B');
+INSERT INTO OG_Result VALUES('63', '131', 'B');
+INSERT INTO OG_Result VALUES('65', '109', 'G');
+INSERT INTO OG_Result VALUES('65', '112', 'S');
+INSERT INTO OG_Result VALUES('65', '113', 'B');
+INSERT INTO OG_Result VALUES('66', '117', 'G');
+INSERT INTO OG_Result VALUES('66', '118', 'S');
+INSERT INTO OG_Result VALUES('66', '119', 'B');
+INSERT INTO OG_Result VALUES('67', '132', 'G');
+INSERT INTO OG_Result VALUES('67', '126', 'S');
+INSERT INTO OG_Result VALUES('67', '133', 'B');
+INSERT INTO OG_Result VALUES('68', '134', 'G');
+INSERT INTO OG_Result VALUES('68', '135', 'S');
+INSERT INTO OG_Result VALUES('68', '120', 'B');
+INSERT INTO OG_Result VALUES('69', '136', 'G');
+INSERT INTO OG_Result VALUES('70', '138', 'G');
+INSERT INTO OG_Result VALUES('71', '140', 'G');
+INSERT INTO OG_Result VALUES('72', '142', 'G');
+INSERT INTO OG_Result VALUES('73', '144', 'G');
+INSERT INTO OG_Result VALUES('74', '146', 'G');
+INSERT INTO OG_Result VALUES('75', '137', 'G');
+INSERT INTO OG_Result VALUES('76', '139', 'G');
+INSERT INTO OG_Result VALUES('77', '141', 'G');
+INSERT INTO OG_Result VALUES('78', '143', 'G');
+INSERT INTO OG_Result VALUES('79', '145', 'G');
+INSERT INTO OG_Result VALUES('80', '147', 'G');
+INSERT INTO OG_Result VALUES('81', '148', 'G');
+INSERT INTO OG_Result VALUES('81', '149', 'S');
+INSERT INTO OG_Result VALUES('81', '150', 'B');
+INSERT INTO OG_Result VALUES('82', '151', 'G');
+INSERT INTO OG_Result VALUES('82', '152', 'S');
+INSERT INTO OG_Result VALUES('82', '153', 'B');
+INSERT INTO OG_Result VALUES('83', '154', 'G');
+INSERT INTO OG_Result VALUES('83', '155', 'S');
+INSERT INTO OG_Result VALUES('83', '156', 'B');
+INSERT INTO OG_Result VALUES('84', '157', 'G');
+INSERT INTO OG_Result VALUES('84', '158', 'S');
+INSERT INTO OG_Result VALUES('84', '159', 'B');
+INSERT INTO OG_Result VALUES('85', '160', 'G');
+INSERT INTO OG_Result VALUES('86', '162', 'G');
+INSERT INTO OG_Result VALUES('87', '163', 'G');
+INSERT INTO OG_Result VALUES('88', '162', 'G');
+INSERT INTO OG_Result VALUES('89', '161', 'G');
+INSERT INTO OG_Result VALUES('90', '162', 'G');
+INSERT INTO OG_Result VALUES('91', '163', 'G');
+INSERT INTO OG_Result VALUES('92', '162', 'G');
+INSERT INTO OG_Result VALUES('93', '167', 'S');
+INSERT INTO OG_Result VALUES('94', '169', 'S');
+INSERT INTO OG_Result VALUES('95', '170', 'S');
+INSERT INTO OG_Result VALUES('96', '168', 'S');
+INSERT INTO OG_Result VALUES('99', '171', 'G');
+INSERT INTO OG_Result VALUES('100', '173', 'G');
+INSERT INTO OG_Result VALUES('101', '175', 'G');
+INSERT INTO OG_Result VALUES('102', '176', 'G');
+INSERT INTO OG_Result VALUES('103', '178', 'G');
+INSERT INTO OG_Result VALUES('104', '180', 'G');
+INSERT INTO OG_Result VALUES('105', '172', 'G');
+INSERT INTO OG_Result VALUES('106', '174', 'G');
+INSERT INTO OG_Result VALUES('107', '172', 'G');
+INSERT INTO OG_Result VALUES('108', '177', 'G');
+INSERT INTO OG_Result VALUES('109', '179', 'G');
+INSERT INTO OG_Result VALUES('110', '181', 'G');
+INSERT INTO OG_Result VALUES('111', '182', 'G');
+INSERT INTO OG_Result VALUES('111', '183', 'S');
+INSERT INTO OG_Result VALUES('111', '184', 'B');
+INSERT INTO OG_Result VALUES('112', '188', 'G');
+INSERT INTO OG_Result VALUES('112', '189', 'S');
+INSERT INTO OG_Result VALUES('112', '190', 'B');
+INSERT INTO OG_Result VALUES('113', '185', 'G');
+INSERT INTO OG_Result VALUES('113', '186', 'S');
+INSERT INTO OG_Result VALUES('113', '187', 'B');
+INSERT INTO OG_Result VALUES('114', '188', 'G');
+INSERT INTO OG_Result VALUES('114', '191', 'S');
+INSERT INTO OG_Result VALUES('114', '192', 'B');
+INSERT INTO OG_Result VALUES('115', '193', 'S');
+INSERT INTO OG_Result VALUES('116', '195', 'S');
+INSERT INTO OG_Result VALUES('117', '193', 'S');
+INSERT INTO OG_Result VALUES('118', '197', 'S');
+INSERT INTO OG_Result VALUES('119', '194', 'S');
+INSERT INTO OG_Result VALUES('120', '196', 'S');
+INSERT INTO OG_Result VALUES('121', '199', 'S');
+INSERT INTO OG_Result VALUES('122', '198', 'S');
+INSERT INTO OG_Result VALUES('123', '200', 'B');
+INSERT INTO OG_Result VALUES('124', '201', 'B');
+INSERT INTO OG_Result VALUES('125', '203', 'B');
+INSERT INTO OG_Result VALUES('126', '204', 'B');
+INSERT INTO OG_Result VALUES('127', '205', 'B');
+INSERT INTO OG_Result VALUES('128', '206', 'B');
+INSERT INTO OG_Result VALUES('129', '207', 'B');
+INSERT INTO OG_Result VALUES('130', '208', 'B');
+INSERT INTO OG_Result VALUES('131', '202', 'B');
+INSERT INTO OG_Result VALUES('132', '203', 'B');
+INSERT INTO OG_Result VALUES('133', '209', 'B');
+INSERT INTO OG_Result VALUES('134', '210', 'B');
+INSERT INTO OG_Result VALUES('135', '211', 'B');
+INSERT INTO OG_Result VALUES('136', '212', 'B');
+INSERT INTO OG_Result VALUES('137', '221', 'G');
+INSERT INTO OG_Result VALUES('137', '223', 'S');
+INSERT INTO OG_Result VALUES('137', '224', 'B');
+INSERT INTO OG_Result VALUES('138', '216', 'G');
+INSERT INTO OG_Result VALUES('138', '213', 'S');
+INSERT INTO OG_Result VALUES('138', '217', 'B');
+INSERT INTO OG_Result VALUES('139', '216', 'G');
+INSERT INTO OG_Result VALUES('139', '218', 'S');
+INSERT INTO OG_Result VALUES('139', '219', 'B');
+INSERT INTO OG_Result VALUES('140', '220', 'G');
+INSERT INTO OG_Result VALUES('140', '221', 'S');
+INSERT INTO OG_Result VALUES('140', '222', 'B');
+INSERT INTO OG_Result VALUES('141', '213', 'G');
+INSERT INTO OG_Result VALUES('141', '214', 'S');
+INSERT INTO OG_Result VALUES('141', '215', 'B');
+INSERT INTO OG_Result VALUES('142', '232', 'G');
+INSERT INTO OG_Result VALUES('142', '230', 'S');
+INSERT INTO OG_Result VALUES('142', '233', 'B');
+INSERT INTO OG_Result VALUES('143', '228', 'G');
+INSERT INTO OG_Result VALUES('143', '225', 'S');
+INSERT INTO OG_Result VALUES('143', '229', 'B');
+INSERT INTO OG_Result VALUES('144', '230', 'G');
+INSERT INTO OG_Result VALUES('144', '229', 'S');
+INSERT INTO OG_Result VALUES('144', '231', 'B');
+INSERT INTO OG_Result VALUES('145', '234', 'G');
+INSERT INTO OG_Result VALUES('145', '235', 'S');
+INSERT INTO OG_Result VALUES('145', '236', 'B');
+INSERT INTO OG_Result VALUES('146', '225', 'G');
+INSERT INTO OG_Result VALUES('146', '226', 'S');
+INSERT INTO OG_Result VALUES('146', '227', 'B');
+INSERT INTO OG_Result VALUES('147', '223', 'G');
+INSERT INTO OG_Result VALUES('147', '220', 'S');
+INSERT INTO OG_Result VALUES('147', '224', 'B');
+INSERT INTO OG_Result VALUES('148', '240', 'G');
+INSERT INTO OG_Result VALUES('148', '241', 'S');
+INSERT INTO OG_Result VALUES('148', '237', 'B');
+INSERT INTO OG_Result VALUES('149', '242', 'G');
+INSERT INTO OG_Result VALUES('149', '243', 'S');
+INSERT INTO OG_Result VALUES('149', '241', 'B');
+INSERT INTO OG_Result VALUES('150', '220', 'G');
+INSERT INTO OG_Result VALUES('150', '245', 'S');
+INSERT INTO OG_Result VALUES('150', '223', 'B');
+INSERT INTO OG_Result VALUES('151', '237', 'G');
+INSERT INTO OG_Result VALUES('151', '238', 'S');
+INSERT INTO OG_Result VALUES('151', '239', 'B');
+INSERT INTO OG_Result VALUES('152', '230', 'G');
+INSERT INTO OG_Result VALUES('152', '235', 'S');
+INSERT INTO OG_Result VALUES('152', '251', 'B');
+INSERT INTO OG_Result VALUES('153', '248', 'G');
+INSERT INTO OG_Result VALUES('153', '230', 'S');
+INSERT INTO OG_Result VALUES('153', '247', 'B');
+INSERT INTO OG_Result VALUES('154', '228', 'G');
+INSERT INTO OG_Result VALUES('154', '230', 'S');
+INSERT INTO OG_Result VALUES('154', '249', 'B');
+INSERT INTO OG_Result VALUES('155', '235', 'G');
+INSERT INTO OG_Result VALUES('155', '230', 'S');
+INSERT INTO OG_Result VALUES('155', '250', 'B');
+INSERT INTO OG_Result VALUES('156', '226', 'G');
+INSERT INTO OG_Result VALUES('156', '246', 'S');
+INSERT INTO OG_Result VALUES('156', '247', 'B');
+
+
+
+
+
+
+
+
+INSERT INTO OG_AthleteSport VALUES('1', '1');
+INSERT INTO OG_AthleteSport VALUES('2', '1');
+INSERT INTO OG_AthleteSport VALUES('3', '1');
+INSERT INTO OG_AthleteSport VALUES('4', '1');
+INSERT INTO OG_AthleteSport VALUES('5', '1');
+INSERT INTO OG_AthleteSport VALUES('6', '1');
+INSERT INTO OG_AthleteSport VALUES('7', '1');
+INSERT INTO OG_AthleteSport VALUES('8', '1');
+INSERT INTO OG_AthleteSport VALUES('9', '1');
+INSERT INTO OG_AthleteSport VALUES('10', '1');
+INSERT INTO OG_AthleteSport VALUES('11', '1');
+INSERT INTO OG_AthleteSport VALUES('12', '1');
+INSERT INTO OG_AthleteSport VALUES('13', '1');
+INSERT INTO OG_AthleteSport VALUES('14', '1');
+INSERT INTO OG_AthleteSport VALUES('15', '1');
+INSERT INTO OG_AthleteSport VALUES('16', '1');
+INSERT INTO OG_AthleteSport VALUES('18', '1');
+INSERT INTO OG_AthleteSport VALUES('19', '1');
+INSERT INTO OG_AthleteSport VALUES('21', '1');
+INSERT INTO OG_AthleteSport VALUES('20', '1');
+INSERT INTO OG_AthleteSport VALUES('22', '1');
+INSERT INTO OG_AthleteSport VALUES('23', '1');
+INSERT INTO OG_AthleteSport VALUES('24', '1');
+INSERT INTO OG_AthleteSport VALUES('25', '1');
+INSERT INTO OG_AthleteSport VALUES('26', '1');
+INSERT INTO OG_AthleteSport VALUES('27', '1');
+INSERT INTO OG_AthleteSport VALUES('28', '1');
+INSERT INTO OG_AthleteSport VALUES('29', '1');
+INSERT INTO OG_AthleteSport VALUES('30', '1');
+INSERT INTO OG_AthleteSport VALUES('31', '1');
+INSERT INTO OG_AthleteSport VALUES('32', '1');
+INSERT INTO OG_AthleteSport VALUES('33', '1');
+INSERT INTO OG_AthleteSport VALUES('34', '1');
+INSERT INTO OG_AthleteSport VALUES('35', '1');
+INSERT INTO OG_AthleteSport VALUES('36', '1');
+INSERT INTO OG_AthleteSport VALUES('37', '1');
+INSERT INTO OG_AthleteSport VALUES('38', '1');
+INSERT INTO OG_AthleteSport VALUES('39', '1');
+INSERT INTO OG_AthleteSport VALUES('40', '1');
+INSERT INTO OG_AthleteSport VALUES('41', '1');
+INSERT INTO OG_AthleteSport VALUES('42', '1');
+INSERT INTO OG_AthleteSport VALUES('43', '1');
+INSERT INTO OG_AthleteSport VALUES('44', '2');
+INSERT INTO OG_AthleteSport VALUES('44', '3');
+INSERT INTO OG_AthleteSport VALUES('45', '2');
+INSERT INTO OG_AthleteSport VALUES('46', '2');
+INSERT INTO OG_AthleteSport VALUES('47', '2');
+INSERT INTO OG_AthleteSport VALUES('48', '2');
+INSERT INTO OG_AthleteSport VALUES('49', '2');
+INSERT INTO OG_AthleteSport VALUES('50', '2');
+INSERT INTO OG_AthleteSport VALUES('51', '2');
+INSERT INTO OG_AthleteSport VALUES('52', '2');
+INSERT INTO OG_AthleteSport VALUES('53', '2');
+INSERT INTO OG_AthleteSport VALUES('54', '2');
+INSERT INTO OG_AthleteSport VALUES('55', '2');
+INSERT INTO OG_AthleteSport VALUES('56', '2');
+INSERT INTO OG_AthleteSport VALUES('57', '2');
+INSERT INTO OG_AthleteSport VALUES('58', '2');
+INSERT INTO OG_AthleteSport VALUES('59', '2');
+INSERT INTO OG_AthleteSport VALUES('60', '2');
+INSERT INTO OG_AthleteSport VALUES('61', '2');
+INSERT INTO OG_AthleteSport VALUES('62', '2');
+INSERT INTO OG_AthleteSport VALUES('63', '2');
+INSERT INTO OG_AthleteSport VALUES('64', '2');
+INSERT INTO OG_AthleteSport VALUES('65', '2');
+INSERT INTO OG_AthleteSport VALUES('66', '2');
+INSERT INTO OG_AthleteSport VALUES('66', '3');
+INSERT INTO OG_AthleteSport VALUES('67', '2');
+INSERT INTO OG_AthleteSport VALUES('68', '2');
+INSERT INTO OG_AthleteSport VALUES('69', '2');
+INSERT INTO OG_AthleteSport VALUES('70', '2');
+INSERT INTO OG_AthleteSport VALUES('71', '2');
+INSERT INTO OG_AthleteSport VALUES('72', '2');
+INSERT INTO OG_AthleteSport VALUES('73', '2');
+INSERT INTO OG_AthleteSport VALUES('74', '2');
+INSERT INTO OG_AthleteSport VALUES('75', '3');
+INSERT INTO OG_AthleteSport VALUES('76', '3');
+INSERT INTO OG_AthleteSport VALUES('77', '3');
+INSERT INTO OG_AthleteSport VALUES('78', '3');
+INSERT INTO OG_AthleteSport VALUES('79', '3');
+INSERT INTO OG_AthleteSport VALUES('80', '3');
+INSERT INTO OG_AthleteSport VALUES('81', '3');
+INSERT INTO OG_AthleteSport VALUES('82', '4');
+INSERT INTO OG_AthleteSport VALUES('83', '4');
+INSERT INTO OG_AthleteSport VALUES('84', '4');
+INSERT INTO OG_AthleteSport VALUES('85', '4');
+INSERT INTO OG_AthleteSport VALUES('86', '4');
+INSERT INTO OG_AthleteSport VALUES('87', '4');
+INSERT INTO OG_AthleteSport VALUES('88', '4');
+INSERT INTO OG_AthleteSport VALUES('89', '4');
+INSERT INTO OG_AthleteSport VALUES('90', '4');
+INSERT INTO OG_AthleteSport VALUES('91', '4');
+INSERT INTO OG_AthleteSport VALUES('92', '4');
+INSERT INTO OG_AthleteSport VALUES('93', '4');
+INSERT INTO OG_AthleteSport VALUES('94', '4');
+INSERT INTO OG_AthleteSport VALUES('95', '5');
+INSERT INTO OG_AthleteSport VALUES('96', '5');
+INSERT INTO OG_AthleteSport VALUES('97', '5');
+INSERT INTO OG_AthleteSport VALUES('98', '5');
+INSERT INTO OG_AthleteSport VALUES('99', '5');
+INSERT INTO OG_AthleteSport VALUES('100', '5');
+INSERT INTO OG_AthleteSport VALUES('101', '5');
+INSERT INTO OG_AthleteSport VALUES('108', '5');
+INSERT INTO OG_AthleteSport VALUES('102', '5');
+INSERT INTO OG_AthleteSport VALUES('103', '5');
+INSERT INTO OG_AthleteSport VALUES('104', '5');
+INSERT INTO OG_AthleteSport VALUES('105', '5');
+INSERT INTO OG_AthleteSport VALUES('106', '5');
+INSERT INTO OG_AthleteSport VALUES('107', '5');
+INSERT INTO OG_AthleteSport VALUES('109', '6');
+INSERT INTO OG_AthleteSport VALUES('110', '6');
+INSERT INTO OG_AthleteSport VALUES('111', '6');
+INSERT INTO OG_AthleteSport VALUES('112', '6');
+INSERT INTO OG_AthleteSport VALUES('113', '6');
+INSERT INTO OG_AthleteSport VALUES('114', '6');
+INSERT INTO OG_AthleteSport VALUES('115', '6');
+INSERT INTO OG_AthleteSport VALUES('116', '6');
+INSERT INTO OG_AthleteSport VALUES('117', '6');
+INSERT INTO OG_AthleteSport VALUES('118', '6');
+INSERT INTO OG_AthleteSport VALUES('119', '6');
+INSERT INTO OG_AthleteSport VALUES('120', '6');
+INSERT INTO OG_AthleteSport VALUES('121', '6');
+INSERT INTO OG_AthleteSport VALUES('122', '6');
+INSERT INTO OG_AthleteSport VALUES('123', '6');
+INSERT INTO OG_AthleteSport VALUES('124', '6');
+INSERT INTO OG_AthleteSport VALUES('125', '6');
+INSERT INTO OG_AthleteSport VALUES('126', '6');
+INSERT INTO OG_AthleteSport VALUES('127', '6');
+INSERT INTO OG_AthleteSport VALUES('128', '6');
+INSERT INTO OG_AthleteSport VALUES('129', '6');
+INSERT INTO OG_AthleteSport VALUES('130', '6');
+INSERT INTO OG_AthleteSport VALUES('131', '6');
+INSERT INTO OG_AthleteSport VALUES('132', '6');
+INSERT INTO OG_AthleteSport VALUES('133', '6');
+INSERT INTO OG_AthleteSport VALUES('134', '6');
+INSERT INTO OG_AthleteSport VALUES('135', '6');
+INSERT INTO OG_AthleteSport VALUES('136', '7');
+INSERT INTO OG_AthleteSport VALUES('137', '7');
+INSERT INTO OG_AthleteSport VALUES('138', '7');
+INSERT INTO OG_AthleteSport VALUES('139', '7');
+INSERT INTO OG_AthleteSport VALUES('140', '7');
+INSERT INTO OG_AthleteSport VALUES('141', '7');
+INSERT INTO OG_AthleteSport VALUES('142', '7');
+INSERT INTO OG_AthleteSport VALUES('143', '7');
+INSERT INTO OG_AthleteSport VALUES('144', '7');
+INSERT INTO OG_AthleteSport VALUES('145', '7');
+INSERT INTO OG_AthleteSport VALUES('146', '7');
+INSERT INTO OG_AthleteSport VALUES('147', '7');
+INSERT INTO OG_AthleteSport VALUES('148', '8');
+INSERT INTO OG_AthleteSport VALUES('149', '8');
+INSERT INTO OG_AthleteSport VALUES('150', '8');
+INSERT INTO OG_AthleteSport VALUES('151', '8');
+INSERT INTO OG_AthleteSport VALUES('152', '8');
+INSERT INTO OG_AthleteSport VALUES('153', '8');
+INSERT INTO OG_AthleteSport VALUES('154', '8');
+INSERT INTO OG_AthleteSport VALUES('155', '8');
+INSERT INTO OG_AthleteSport VALUES('156', '8');
+INSERT INTO OG_AthleteSport VALUES('157', '8');
+INSERT INTO OG_AthleteSport VALUES('158', '8');
+INSERT INTO OG_AthleteSport VALUES('159', '8');
+INSERT INTO OG_AthleteSport VALUES('167', '9');
+INSERT INTO OG_AthleteSport VALUES('168', '9');
+INSERT INTO OG_AthleteSport VALUES('169', '9');
+INSERT INTO OG_AthleteSport VALUES('170', '9');
+INSERT INTO OG_AthleteSport VALUES('171', '10');
+INSERT INTO OG_AthleteSport VALUES('172', '10');
+INSERT INTO OG_AthleteSport VALUES('173', '10');
+INSERT INTO OG_AthleteSport VALUES('174', '10');
+INSERT INTO OG_AthleteSport VALUES('175', '10');
+INSERT INTO OG_AthleteSport VALUES('176', '10');
+INSERT INTO OG_AthleteSport VALUES('177', '10');
+INSERT INTO OG_AthleteSport VALUES('178', '10');
+INSERT INTO OG_AthleteSport VALUES('179', '10');
+INSERT INTO OG_AthleteSport VALUES('180', '10');
+INSERT INTO OG_AthleteSport VALUES('181', '10');
+INSERT INTO OG_AthleteSport VALUES('182', '11');
+INSERT INTO OG_AthleteSport VALUES('183', '11');
+INSERT INTO OG_AthleteSport VALUES('184', '11');
+INSERT INTO OG_AthleteSport VALUES('185', '11');
+INSERT INTO OG_AthleteSport VALUES('186', '11');
+INSERT INTO OG_AthleteSport VALUES('187', '11');
+INSERT INTO OG_AthleteSport VALUES('188', '11');
+INSERT INTO OG_AthleteSport VALUES('189', '11');
+INSERT INTO OG_AthleteSport VALUES('190', '11');
+INSERT INTO OG_AthleteSport VALUES('191', '11');
+INSERT INTO OG_AthleteSport VALUES('192', '11');
+INSERT INTO OG_AthleteSport VALUES('193', '12');
+INSERT INTO OG_AthleteSport VALUES('194', '12');
+INSERT INTO OG_AthleteSport VALUES('195', '12');
+INSERT INTO OG_AthleteSport VALUES('196', '12');
+INSERT INTO OG_AthleteSport VALUES('197', '12');
+INSERT INTO OG_AthleteSport VALUES('198', '12');
+INSERT INTO OG_AthleteSport VALUES('199', '12');
+INSERT INTO OG_AthleteSport VALUES('200', '13');
+INSERT INTO OG_AthleteSport VALUES('201', '13');
+INSERT INTO OG_AthleteSport VALUES('202', '13');
+INSERT INTO OG_AthleteSport VALUES('203', '13');
+INSERT INTO OG_AthleteSport VALUES('204', '13');
+INSERT INTO OG_AthleteSport VALUES('205', '13');
+INSERT INTO OG_AthleteSport VALUES('206', '13');
+INSERT INTO OG_AthleteSport VALUES('207', '13');
+INSERT INTO OG_AthleteSport VALUES('208', '13');
+INSERT INTO OG_AthleteSport VALUES('209', '13');
+INSERT INTO OG_AthleteSport VALUES('210', '13');
+INSERT INTO OG_AthleteSport VALUES('211', '13');
+INSERT INTO OG_AthleteSport VALUES('212', '13');
+INSERT INTO OG_AthleteSport VALUES('213', '14');
+INSERT INTO OG_AthleteSport VALUES('214', '14');
+INSERT INTO OG_AthleteSport VALUES('215', '14');
+INSERT INTO OG_AthleteSport VALUES('216', '14');
+INSERT INTO OG_AthleteSport VALUES('217', '14');
+INSERT INTO OG_AthleteSport VALUES('218', '14');
+INSERT INTO OG_AthleteSport VALUES('219', '14');
+INSERT INTO OG_AthleteSport VALUES('220', '14');
+INSERT INTO OG_AthleteSport VALUES('221', '14');
+INSERT INTO OG_AthleteSport VALUES('222', '14');
+INSERT INTO OG_AthleteSport VALUES('223', '14');
+INSERT INTO OG_AthleteSport VALUES('224', '14');
+INSERT INTO OG_AthleteSport VALUES('225', '14');
+INSERT INTO OG_AthleteSport VALUES('226', '14');
+INSERT INTO OG_AthleteSport VALUES('227', '14');
+INSERT INTO OG_AthleteSport VALUES('228', '14');
+INSERT INTO OG_AthleteSport VALUES('229', '14');
+INSERT INTO OG_AthleteSport VALUES('230', '14');
+INSERT INTO OG_AthleteSport VALUES('231', '14');
+INSERT INTO OG_AthleteSport VALUES('232', '14');
+INSERT INTO OG_AthleteSport VALUES('233', '14');
+INSERT INTO OG_AthleteSport VALUES('234', '14');
+INSERT INTO OG_AthleteSport VALUES('235', '14');
+INSERT INTO OG_AthleteSport VALUES('236', '14');
+INSERT INTO OG_AthleteSport VALUES('237', '14');
+INSERT INTO OG_AthleteSport VALUES('238', '14');
+INSERT INTO OG_AthleteSport VALUES('239', '14');
+INSERT INTO OG_AthleteSport VALUES('240', '14');
+INSERT INTO OG_AthleteSport VALUES('241', '14');
+INSERT INTO OG_AthleteSport VALUES('242', '14');
+INSERT INTO OG_AthleteSport VALUES('243', '14');
+INSERT INTO OG_AthleteSport VALUES('244', '14');
+INSERT INTO OG_AthleteSport VALUES('245', '14');
+INSERT INTO OG_AthleteSport VALUES('246', '14');
+INSERT INTO OG_AthleteSport VALUES('247', '14');
+INSERT INTO OG_AthleteSport VALUES('248', '14');
+INSERT INTO OG_AthleteSport VALUES('249', '14');
+INSERT INTO OG_AthleteSport VALUES('250', '14');
+INSERT INTO OG_AthleteSport VALUES('251', '14');
+
+
+
+
+
+
+
+INSERT INTO OG_AthleteOlympic VALUES('1', '1');
+INSERT INTO OG_AthleteOlympic VALUES('2', '1');
+INSERT INTO OG_AthleteOlympic VALUES('1', '2');
+INSERT INTO OG_AthleteOlympic VALUES('2', '2');
+INSERT INTO OG_AthleteOlympic VALUES('2', '3');
+INSERT INTO OG_AthleteOlympic VALUES('1', '4');
+INSERT INTO OG_AthleteOlympic VALUES('1', '5');
+INSERT INTO OG_AthleteOlympic VALUES('1', '6');
+INSERT INTO OG_AthleteOlympic VALUES('2', '6');
+INSERT INTO OG_AthleteOlympic VALUES('1', '7');
+INSERT INTO OG_AthleteOlympic VALUES('2', '7');
+INSERT INTO OG_AthleteOlympic VALUES('1', '8');
+INSERT INTO OG_AthleteOlympic VALUES('2', '8');
+INSERT INTO OG_AthleteOlympic VALUES('1', '9');
+INSERT INTO OG_AthleteOlympic VALUES('2', '9');
+INSERT INTO OG_AthleteOlympic VALUES('1', '10');
+INSERT INTO OG_AthleteOlympic VALUES('2', '10');
+INSERT INTO OG_AthleteOlympic VALUES('1', '11');
+INSERT INTO OG_AthleteOlympic VALUES('2', '11');
+INSERT INTO OG_AthleteOlympic VALUES('1', '12');
+INSERT INTO OG_AthleteOlympic VALUES('2', '12');
+INSERT INTO OG_AthleteOlympic VALUES('1', '13');
+INSERT INTO OG_AthleteOlympic VALUES('1', '14');
+INSERT INTO OG_AthleteOlympic VALUES('2', '14');
+INSERT INTO OG_AthleteOlympic VALUES('1', '15');
+INSERT INTO OG_AthleteOlympic VALUES('2', '15');
+INSERT INTO OG_AthleteOlympic VALUES('2', '16');
+INSERT INTO OG_AthleteOlympic VALUES('1', '17');
+INSERT INTO OG_AthleteOlympic VALUES('1', '18');
+INSERT INTO OG_AthleteOlympic VALUES('2', '18');
+INSERT INTO OG_AthleteOlympic VALUES('1', '19');
+INSERT INTO OG_AthleteOlympic VALUES('1', '20');
+INSERT INTO OG_AthleteOlympic VALUES('2', '20');
+INSERT INTO OG_AthleteOlympic VALUES('1', '21');
+INSERT INTO OG_AthleteOlympic VALUES('2', '21');
+INSERT INTO OG_AthleteOlympic VALUES('1', '22');
+INSERT INTO OG_AthleteOlympic VALUES('2', '22');
+INSERT INTO OG_AthleteOlympic VALUES('1', '23');
+INSERT INTO OG_AthleteOlympic VALUES('2', '23');
+INSERT INTO OG_AthleteOlympic VALUES('1', '24');
+INSERT INTO OG_AthleteOlympic VALUES('1', '25');
+INSERT INTO OG_AthleteOlympic VALUES('1', '26');
+INSERT INTO OG_AthleteOlympic VALUES('2', '27');
+INSERT INTO OG_AthleteOlympic VALUES('2', '28');
+INSERT INTO OG_AthleteOlympic VALUES('1', '28');
+INSERT INTO OG_AthleteOlympic VALUES('2', '29');
+INSERT INTO OG_AthleteOlympic VALUES('1', '30');
+INSERT INTO OG_AthleteOlympic VALUES('1', '31');
+INSERT INTO OG_AthleteOlympic VALUES('2', '32');
+INSERT INTO OG_AthleteOlympic VALUES('1', '32');
+INSERT INTO OG_AthleteOlympic VALUES('2', '33');
+INSERT INTO OG_AthleteOlympic VALUES('1', '33');
+INSERT INTO OG_AthleteOlympic VALUES('1', '34');
+INSERT INTO OG_AthleteOlympic VALUES('2', '34');
+INSERT INTO OG_AthleteOlympic VALUES('1', '35');
+INSERT INTO OG_AthleteOlympic VALUES('2', '35');
+INSERT INTO OG_AthleteOlympic VALUES('1', '36');
+INSERT INTO OG_AthleteOlympic VALUES('2', '36');
+INSERT INTO OG_AthleteOlympic VALUES('2', '37');
+INSERT INTO OG_AthleteOlympic VALUES('1', '38');
+INSERT INTO OG_AthleteOlympic VALUES('1', '39');
+INSERT INTO OG_AthleteOlympic VALUES('1', '40');
+INSERT INTO OG_AthleteOlympic VALUES('2', '40');
+INSERT INTO OG_AthleteOlympic VALUES('1', '41');
+INSERT INTO OG_AthleteOlympic VALUES('2', '41');
+INSERT INTO OG_AthleteOlympic VALUES('2', '42');
+INSERT INTO OG_AthleteOlympic VALUES('2', '43');
+INSERT INTO OG_AthleteOlympic VALUES('1', '44');
+INSERT INTO OG_AthleteOlympic VALUES('2', '44');
+INSERT INTO OG_AthleteOlympic VALUES('1', '45');
+INSERT INTO OG_AthleteOlympic VALUES('2', '45');
+INSERT INTO OG_AthleteOlympic VALUES('1', '46');
+INSERT INTO OG_AthleteOlympic VALUES('2', '46');
+INSERT INTO OG_AthleteOlympic VALUES('1', '47');
+INSERT INTO OG_AthleteOlympic VALUES('1', '48');
+INSERT INTO OG_AthleteOlympic VALUES('2', '48');
+INSERT INTO OG_AthleteOlympic VALUES('1', '49');
+INSERT INTO OG_AthleteOlympic VALUES('2', '49');
+INSERT INTO OG_AthleteOlympic VALUES('1', '50');
+INSERT INTO OG_AthleteOlympic VALUES('2', '50');
+INSERT INTO OG_AthleteOlympic VALUES('2', '51');
+INSERT INTO OG_AthleteOlympic VALUES('2', '52');
+INSERT INTO OG_AthleteOlympic VALUES('1', '53');
+INSERT INTO OG_AthleteOlympic VALUES('2', '53');
+INSERT INTO OG_AthleteOlympic VALUES('1', '54');
+INSERT INTO OG_AthleteOlympic VALUES('1', '56');
+INSERT INTO OG_AthleteOlympic VALUES('2', '56');
+INSERT INTO OG_AthleteOlympic VALUES('1', '55');
+INSERT INTO OG_AthleteOlympic VALUES('2', '55');
+INSERT INTO OG_AthleteOlympic VALUES('1', '57');
+INSERT INTO OG_AthleteOlympic VALUES('2', '57');
+INSERT INTO OG_AthleteOlympic VALUES('1', '58');
+INSERT INTO OG_AthleteOlympic VALUES('2', '58');
+INSERT INTO OG_AthleteOlympic VALUES('1', '59');
+INSERT INTO OG_AthleteOlympic VALUES('2', '59');
+INSERT INTO OG_AthleteOlympic VALUES('1', '60');
+INSERT INTO OG_AthleteOlympic VALUES('1', '61');
+INSERT INTO OG_AthleteOlympic VALUES('2', '61');
+INSERT INTO OG_AthleteOlympic VALUES('2', '62');
+INSERT INTO OG_AthleteOlympic VALUES('1', '62');
+INSERT INTO OG_AthleteOlympic VALUES('2', '63');
+INSERT INTO OG_AthleteOlympic VALUES('1', '63');
+INSERT INTO OG_AthleteOlympic VALUES('2', '64');
+INSERT INTO OG_AthleteOlympic VALUES('1', '64');
+INSERT INTO OG_AthleteOlympic VALUES('1', '65');
+INSERT INTO OG_AthleteOlympic VALUES('1', '66');
+INSERT INTO OG_AthleteOlympic VALUES('1', '67');
+INSERT INTO OG_AthleteOlympic VALUES('2', '67');
+INSERT INTO OG_AthleteOlympic VALUES('1', '68');
+INSERT INTO OG_AthleteOlympic VALUES('2', '69');
+INSERT INTO OG_AthleteOlympic VALUES('1', '70');
+INSERT INTO OG_AthleteOlympic VALUES('2', '70');
+INSERT INTO OG_AthleteOlympic VALUES('1', '71');
+INSERT INTO OG_AthleteOlympic VALUES('2', '71');
+INSERT INTO OG_AthleteOlympic VALUES('2', '72');
+INSERT INTO OG_AthleteOlympic VALUES('1', '73');
+INSERT INTO OG_AthleteOlympic VALUES('2', '73');
+INSERT INTO OG_AthleteOlympic VALUES('1', '74');
+INSERT INTO OG_AthleteOlympic VALUES('2', '74');
+INSERT INTO OG_AthleteOlympic VALUES('2', '75');
+INSERT INTO OG_AthleteOlympic VALUES('2', '76');
+INSERT INTO OG_AthleteOlympic VALUES('2', '77');
+INSERT INTO OG_AthleteOlympic VALUES('2', '78');
+INSERT INTO OG_AthleteOlympic VALUES('2', '79');
+INSERT INTO OG_AthleteOlympic VALUES('2', '80');
+INSERT INTO OG_AthleteOlympic VALUES('2', '81');
+INSERT INTO OG_AthleteOlympic VALUES('2', '82');
+INSERT INTO OG_AthleteOlympic VALUES('1', '83');
+INSERT INTO OG_AthleteOlympic VALUES('2', '83');
+INSERT INTO OG_AthleteOlympic VALUES('2', '84');
+INSERT INTO OG_AthleteOlympic VALUES('1', '85');
+INSERT INTO OG_AthleteOlympic VALUES('1', '86');
+INSERT INTO OG_AthleteOlympic VALUES('2', '86');
+INSERT INTO OG_AthleteOlympic VALUES('1', '87');
+INSERT INTO OG_AthleteOlympic VALUES('1', '88');
+INSERT INTO OG_AthleteOlympic VALUES('1', '89');
+INSERT INTO OG_AthleteOlympic VALUES('2', '89');
+INSERT INTO OG_AthleteOlympic VALUES('1', '90');
+INSERT INTO OG_AthleteOlympic VALUES('2', '90');
+INSERT INTO OG_AthleteOlympic VALUES('2', '91');
+INSERT INTO OG_AthleteOlympic VALUES('1', '92');
+INSERT INTO OG_AthleteOlympic VALUES('2', '92');
+INSERT INTO OG_AthleteOlympic VALUES('1', '93');
+INSERT INTO OG_AthleteOlympic VALUES('2', '93');
+INSERT INTO OG_AthleteOlympic VALUES('1', '94');
+INSERT INTO OG_AthleteOlympic VALUES('1', '95');
+INSERT INTO OG_AthleteOlympic VALUES('1', '96');
+INSERT INTO OG_AthleteOlympic VALUES('1', '97');
+INSERT INTO OG_AthleteOlympic VALUES('1', '98');
+INSERT INTO OG_AthleteOlympic VALUES('1', '99');
+INSERT INTO OG_AthleteOlympic VALUES('1', '100');
+INSERT INTO OG_AthleteOlympic VALUES('2', '97');
+INSERT INTO OG_AthleteOlympic VALUES('2', '101');
+INSERT INTO OG_AthleteOlympic VALUES('2', '102');
+INSERT INTO OG_AthleteOlympic VALUES('2', '103');
+INSERT INTO OG_AthleteOlympic VALUES('2', '104');
+INSERT INTO OG_AthleteOlympic VALUES('2', '105');
+INSERT INTO OG_AthleteOlympic VALUES('2', '106');
+INSERT INTO OG_AthleteOlympic VALUES('2', '107');
+INSERT INTO OG_AthleteOlympic VALUES('2', '108');
+INSERT INTO OG_AthleteOlympic VALUES('1', '109');
+INSERT INTO OG_AthleteOlympic VALUES('2', '109');
+INSERT INTO OG_AthleteOlympic VALUES('2', '110');
+INSERT INTO OG_AthleteOlympic VALUES('1', '111');
+INSERT INTO OG_AthleteOlympic VALUES('2', '111');
+INSERT INTO OG_AthleteOlympic VALUES('1', '112');
+INSERT INTO OG_AthleteOlympic VALUES('2', '112');
+INSERT INTO OG_AthleteOlympic VALUES('1', '113');
+INSERT INTO OG_AthleteOlympic VALUES('2', '113');
+INSERT INTO OG_AthleteOlympic VALUES('2', '114');
+INSERT INTO OG_AthleteOlympic VALUES('2', '115');
+INSERT INTO OG_AthleteOlympic VALUES('1', '116');
+INSERT INTO OG_AthleteOlympic VALUES('2', '116');
+INSERT INTO OG_AthleteOlympic VALUES('1', '117');
+INSERT INTO OG_AthleteOlympic VALUES('1', '118');
+INSERT INTO OG_AthleteOlympic VALUES('1', '119');
+INSERT INTO OG_AthleteOlympic VALUES('2', '119');
+INSERT INTO OG_AthleteOlympic VALUES('2', '120');
+INSERT INTO OG_AthleteOlympic VALUES('2', '121');
+INSERT INTO OG_AthleteOlympic VALUES('2', '122');
+INSERT INTO OG_AthleteOlympic VALUES('2', '123');
+INSERT INTO OG_AthleteOlympic VALUES('2', '124');
+INSERT INTO OG_AthleteOlympic VALUES('2', '125');
+INSERT INTO OG_AthleteOlympic VALUES('2', '126');
+INSERT INTO OG_AthleteOlympic VALUES('2', '127');
+INSERT INTO OG_AthleteOlympic VALUES('2', '128');
+INSERT INTO OG_AthleteOlympic VALUES('2', '129');
+INSERT INTO OG_AthleteOlympic VALUES('2', '130');
+INSERT INTO OG_AthleteOlympic VALUES('2', '131');
+INSERT INTO OG_AthleteOlympic VALUES('1', '120');
+INSERT INTO OG_AthleteOlympic VALUES('1', '126');
+INSERT INTO OG_AthleteOlympic VALUES('1', '132');
+INSERT INTO OG_AthleteOlympic VALUES('1', '133');
+INSERT INTO OG_AthleteOlympic VALUES('1', '134');
+INSERT INTO OG_AthleteOlympic VALUES('1', '135');
+INSERT INTO OG_AthleteOlympic VALUES('1', '136');
+INSERT INTO OG_AthleteOlympic VALUES('2', '136');
+INSERT INTO OG_AthleteOlympic VALUES('1', '137');
+INSERT INTO OG_AthleteOlympic VALUES('2', '137');
+INSERT INTO OG_AthleteOlympic VALUES('1', '138');
+INSERT INTO OG_AthleteOlympic VALUES('2', '138');
+INSERT INTO OG_AthleteOlympic VALUES('1', '139');
+INSERT INTO OG_AthleteOlympic VALUES('1', '140');
+INSERT INTO OG_AthleteOlympic VALUES('2', '140');
+INSERT INTO OG_AthleteOlympic VALUES('1', '141');
+INSERT INTO OG_AthleteOlympic VALUES('2', '141');
+INSERT INTO OG_AthleteOlympic VALUES('1', '142');
+INSERT INTO OG_AthleteOlympic VALUES('2', '142');
+INSERT INTO OG_AthleteOlympic VALUES('1', '143');
+INSERT INTO OG_AthleteOlympic VALUES('2', '143');
+INSERT INTO OG_AthleteOlympic VALUES('1', '144');
+INSERT INTO OG_AthleteOlympic VALUES('2', '144');
+INSERT INTO OG_AthleteOlympic VALUES('1', '145');
+INSERT INTO OG_AthleteOlympic VALUES('2', '145');
+INSERT INTO OG_AthleteOlympic VALUES('1', '146');
+INSERT INTO OG_AthleteOlympic VALUES('2', '146');
+INSERT INTO OG_AthleteOlympic VALUES('1', '147');
+INSERT INTO OG_AthleteOlympic VALUES('2', '147');
+INSERT INTO OG_AthleteOlympic VALUES('2', '148');
+INSERT INTO OG_AthleteOlympic VALUES('2', '149');
+INSERT INTO OG_AthleteOlympic VALUES('2', '150');
+INSERT INTO OG_AthleteOlympic VALUES('2', '151');
+INSERT INTO OG_AthleteOlympic VALUES('2', '152');
+INSERT INTO OG_AthleteOlympic VALUES('2', '153');
+INSERT INTO OG_AthleteOlympic VALUES('1', '154');
+INSERT INTO OG_AthleteOlympic VALUES('1', '155');
+INSERT INTO OG_AthleteOlympic VALUES('1', '156');
+INSERT INTO OG_AthleteOlympic VALUES('1', '157');
+INSERT INTO OG_AthleteOlympic VALUES('1', '158');
+INSERT INTO OG_AthleteOlympic VALUES('1', '159');
+INSERT INTO OG_AthleteOlympic VALUES('2', '160');
+INSERT INTO OG_AthleteOlympic VALUES('1', '161');
+INSERT INTO OG_AthleteOlympic VALUES('2', '161');
+INSERT INTO OG_AthleteOlympic VALUES('1', '162');
+INSERT INTO OG_AthleteOlympic VALUES('2', '162');
+INSERT INTO OG_AthleteOlympic VALUES('1', '163');
+INSERT INTO OG_AthleteOlympic VALUES('2', '163');
+INSERT INTO OG_AthleteOlympic VALUES('1', '167');
+INSERT INTO OG_AthleteOlympic VALUES('2', '167');
+INSERT INTO OG_AthleteOlympic VALUES('1', '168');
+INSERT INTO OG_AthleteOlympic VALUES('1', '169');
+INSERT INTO OG_AthleteOlympic VALUES('2', '169');
+INSERT INTO OG_AthleteOlympic VALUES('2', '170');
+INSERT INTO OG_AthleteOlympic VALUES('2', '171');
+INSERT INTO OG_AthleteOlympic VALUES('1', '172');
+INSERT INTO OG_AthleteOlympic VALUES('2', '173');
+INSERT INTO OG_AthleteOlympic VALUES('1', '174');
+INSERT INTO OG_AthleteOlympic VALUES('2', '174');
+INSERT INTO OG_AthleteOlympic VALUES('1', '175');
+INSERT INTO OG_AthleteOlympic VALUES('2', '175');
+INSERT INTO OG_AthleteOlympic VALUES('2', '176');
+INSERT INTO OG_AthleteOlympic VALUES('1', '177');
+INSERT INTO OG_AthleteOlympic VALUES('2', '178');
+INSERT INTO OG_AthleteOlympic VALUES('1', '179');
+INSERT INTO OG_AthleteOlympic VALUES('2', '179');
+INSERT INTO OG_AthleteOlympic VALUES('1', '180');
+INSERT INTO OG_AthleteOlympic VALUES('2', '180');
+INSERT INTO OG_AthleteOlympic VALUES('1', '181');
+INSERT INTO OG_AthleteOlympic VALUES('1', '182');
+INSERT INTO OG_AthleteOlympic VALUES('2', '182');
+INSERT INTO OG_AthleteOlympic VALUES('1', '183');
+INSERT INTO OG_AthleteOlympic VALUES('2', '183');
+INSERT INTO OG_AthleteOlympic VALUES('1', '184');
+INSERT INTO OG_AthleteOlympic VALUES('2', '184');
+INSERT INTO OG_AthleteOlympic VALUES('1', '185');
+INSERT INTO OG_AthleteOlympic VALUES('1', '186');
+INSERT INTO OG_AthleteOlympic VALUES('2', '186');
+INSERT INTO OG_AthleteOlympic VALUES('1', '187');
+INSERT INTO OG_AthleteOlympic VALUES('2', '187');
+INSERT INTO OG_AthleteOlympic VALUES('1', '188');
+INSERT INTO OG_AthleteOlympic VALUES('2', '188');
+INSERT INTO OG_AthleteOlympic VALUES('2', '189');
+INSERT INTO OG_AthleteOlympic VALUES('2', '190');
+INSERT INTO OG_AthleteOlympic VALUES('1', '191');
+INSERT INTO OG_AthleteOlympic VALUES('1', '192');
+INSERT INTO OG_AthleteOlympic VALUES('1', '193');
+INSERT INTO OG_AthleteOlympic VALUES('2', '193');
+INSERT INTO OG_AthleteOlympic VALUES('1', '194');
+INSERT INTO OG_AthleteOlympic VALUES('2', '194');
+INSERT INTO OG_AthleteOlympic VALUES('2', '195');
+INSERT INTO OG_AthleteOlympic VALUES('1', '196');
+INSERT INTO OG_AthleteOlympic VALUES('2', '196');
+INSERT INTO OG_AthleteOlympic VALUES('1', '197');
+INSERT INTO OG_AthleteOlympic VALUES('2', '197');
+INSERT INTO OG_AthleteOlympic VALUES('1', '198');
+INSERT INTO OG_AthleteOlympic VALUES('2', '198');
+INSERT INTO OG_AthleteOlympic VALUES('1', '199');
+INSERT INTO OG_AthleteOlympic VALUES('1', '200');
+INSERT INTO OG_AthleteOlympic VALUES('2', '200');
+INSERT INTO OG_AthleteOlympic VALUES('1', '201');
+INSERT INTO OG_AthleteOlympic VALUES('2', '201');
+INSERT INTO OG_AthleteOlympic VALUES('1', '202');
+INSERT INTO OG_AthleteOlympic VALUES('2', '202');
+INSERT INTO OG_AthleteOlympic VALUES('1', '203');
+INSERT INTO OG_AthleteOlympic VALUES('2', '203');
+INSERT INTO OG_AthleteOlympic VALUES('2', '204');
+INSERT INTO OG_AthleteOlympic VALUES('2', '205');
+INSERT INTO OG_AthleteOlympic VALUES('2', '206');
+INSERT INTO OG_AthleteOlympic VALUES('2', '207');
+INSERT INTO OG_AthleteOlympic VALUES('2', '208');
+INSERT INTO OG_AthleteOlympic VALUES('1', '209');
+INSERT INTO OG_AthleteOlympic VALUES('1', '210');
+INSERT INTO OG_AthleteOlympic VALUES('1', '211');
+INSERT INTO OG_AthleteOlympic VALUES('1', '212');
+INSERT INTO OG_AthleteOlympic VALUES('2', '213');
+INSERT INTO OG_AthleteOlympic VALUES('2', '214');
+INSERT INTO OG_AthleteOlympic VALUES('2', '215');
+INSERT INTO OG_AthleteOlympic VALUES('2', '216');
+INSERT INTO OG_AthleteOlympic VALUES('2', '217');
+INSERT INTO OG_AthleteOlympic VALUES('2', '218');
+INSERT INTO OG_AthleteOlympic VALUES('2', '219');
+INSERT INTO OG_AthleteOlympic VALUES('2', '220');
+INSERT INTO OG_AthleteOlympic VALUES('2', '221');
+INSERT INTO OG_AthleteOlympic VALUES('2', '222');
+INSERT INTO OG_AthleteOlympic VALUES('2', '223');
+INSERT INTO OG_AthleteOlympic VALUES('2', '224');
+INSERT INTO OG_AthleteOlympic VALUES('2', '225');
+INSERT INTO OG_AthleteOlympic VALUES('2', '226');
+INSERT INTO OG_AthleteOlympic VALUES('2', '227');
+INSERT INTO OG_AthleteOlympic VALUES('2', '228');
+INSERT INTO OG_AthleteOlympic VALUES('2', '229');
+INSERT INTO OG_AthleteOlympic VALUES('2', '230');
+INSERT INTO OG_AthleteOlympic VALUES('2', '231');
+INSERT INTO OG_AthleteOlympic VALUES('2', '232');
+INSERT INTO OG_AthleteOlympic VALUES('2', '233');
+INSERT INTO OG_AthleteOlympic VALUES('2', '234');
+INSERT INTO OG_AthleteOlympic VALUES('2', '235');
+INSERT INTO OG_AthleteOlympic VALUES('2', '236');
+INSERT INTO OG_AthleteOlympic VALUES('1', '220');
+INSERT INTO OG_AthleteOlympic VALUES('1', '223');
+INSERT INTO OG_AthleteOlympic VALUES('1', '226');
+INSERT INTO OG_AthleteOlympic VALUES('1', '228');
+INSERT INTO OG_AthleteOlympic VALUES('1', '230');
+INSERT INTO OG_AthleteOlympic VALUES('1', '235');
+INSERT INTO OG_AthleteOlympic VALUES('1', '236');
+INSERT INTO OG_AthleteOlympic VALUES('1', '237');
+INSERT INTO OG_AthleteOlympic VALUES('1', '238');
+INSERT INTO OG_AthleteOlympic VALUES('1', '239');
+INSERT INTO OG_AthleteOlympic VALUES('1', '240');
+INSERT INTO OG_AthleteOlympic VALUES('1', '241');
+INSERT INTO OG_AthleteOlympic VALUES('1', '242');
+INSERT INTO OG_AthleteOlympic VALUES('1', '243');
+INSERT INTO OG_AthleteOlympic VALUES('1', '244');
+INSERT INTO OG_AthleteOlympic VALUES('1', '245');
+INSERT INTO OG_AthleteOlympic VALUES('1', '246');
+INSERT INTO OG_AthleteOlympic VALUES('1', '247');
+INSERT INTO OG_AthleteOlympic VALUES('1', '248');
+INSERT INTO OG_AthleteOlympic VALUES('1', '249');
+INSERT INTO OG_AthleteOlympic VALUES('1', '250');
+INSERT INTO OG_AthleteOlympic VALUES('1', '251');
+
+
+
